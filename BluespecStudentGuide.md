@@ -208,7 +208,7 @@ Deriving Bits means that the values Red, Green, Yellow and Blue will be automati
 
 To extract the Integer value of a numeric type, use `Integer i = valueOf(n)`, where n is the numeric type.
 
-To extract convert an Integer to a Bit#(n) value, use `Bit#(n) x = fromInteger(i)`, where i is an integer.
+To extract convert an Integer to a Bit#(n) value, use `Bit#(n) x = fromInteger(i)`, where i is an Integer.
 
 You can chain these together to store the value of a numeric type into a Bit#(n) as follows:
 
@@ -334,8 +334,8 @@ Bit#(7) f = { '0, x, '1 }; // NOT ALLOWED, not clear how many 0's vs 1's to fill
 We can also accomplish the functionality through two built-in Bluespec functions, zeroExtend and signExtend.
 * `zeroExtend(x)`: equivalent to `{ '0, x }`
 * `signExtend(x)`:
-- equivalent to `{ '0, x }` if the MSB of x is 0
-- equivalent to `{ '1, x }` if the MSB of x is 1
+    * equivalent to `{ '0, x }` if the MSB of x is 0
+    * equivalent to `{ '1, x }` if the MSB of x is 1
 
 ##### Truncating Bits
 
@@ -408,23 +408,35 @@ You can use arithmetic operators on many types. If the operator does different t
 TODO: Figure out the actual rules for arithmetic when numbers are different sizes or signed vs unsigned
 
 `a + b` : Addition
+
 `a - b` : Subtraction
+
 `a * b` : Multiplication
+
 `a / b` : Division
+
 `a % b` : Modulus
+
 `a << b` : Left shift
+
 `a >> b` : Right shift
 
 ##### Comparators
 
 `a <= b` : Less than or equal to
+
 `a < b`  : Less than
+
 `a >= b` : Greater than or equal to
+
 `a > b ` : Greater than
+
 `a == b` : Equals
+
 `a != b` : Not equals
 
-#### Type operators
+
+#### Numeric type operators
 
 When we have parameterized types, we sometimes want to define variable widths based on some function of the the parameter width. There are built-in functions for doing basic arithemetic operations on numeric types.
 
@@ -439,27 +451,152 @@ Bit#(TExp#(n))    e; // e is 2^n bits wide
 Bit#(TMul#(n, m)) f; // f is n*m bits wide
 Bit#(TDiv#(n, m)) g; // g is n/m bits wide 
 
-Bit#(n+1) h;            // ILLEGAL: Cannot use + operator on numeric types
+Bit#(n+1) h;            // ILLEGAL: Cannot use + operator with numeric type n
 Bit#(valueOf(n) + 1) i; // ILLEGAL: Bit parameter needs to be a type, not an Integer
 ```
 
 ## Combinational Circuits
 
-Now we know how to define types and variables and write basic expressions. The next question is how we can put these expressions together into code that actually does something and can be represented by hardware.
+Now we know how to define types and variables and write basic expressions. The next question is, how we can put these expressions together into code that actually does something?
 
-In Bluespec, we can create purely combinational (stateless and unclocked) circuits by writing functions. The function inputs are the inputs to the combinational circuit, the function outputs are the outputs from the combinational circuit, and the body of the function describes the combinational logic that converts the inputs to outputs. This section describes the basic components needed to write Bluespec functions.
+In Bluespec, we can create representations of combinational (stateless and unclocked) circuits by writing functions. The function inputs are the inputs to the combinational circuit, the function outputs are the outputs from the combinational circuit, and the body of the function describes the combinational logic that converts the inputs to outputs. This section describes the basic components needed to write Bluespec functions.
 
 ### Variables
 
 #### Variable declaration
 
+Variables are declared in code as follows:
+
+`TypeName variableName;`
+
+Variables must be declared in the function definition, or within the function. You cannot declare a global variable, as there is no such thing as a "global variable" in hardware, since the function itself should encapsulate an entire combinational circuit. 
+
+This also means that the scope of a declared variable is only the function that it is declared in.
+
 #### Variable assignment
+
+Variables must be assigned values to be used. Generally, you will include an initial value in its declaration. If you don't, then you should always make sure taht the variable is assigned a value before it's used.
+
+```
+TypeName variableName = initialValue; // Initializes variableName to initialValue
+
+// Alternate way of assigning initalValue
+TypeName var1;
+if (cond1) var1 = init1;
+else var1 = init2;
+
+// BAD
+TypeName var2;
+if (cond) var2 = init1;
+...
+y = f(var2); // var2 doesn't have a value if cond=False !
+```
+
+#### let
+
+It's good practice to explicitly declare your variable sizes. However, you can also allow the compiler to infer the type instead of writing it explicitly, by using the keyword `let` instead of declaring a variable type.
+
+For example
+
+```
+Bit#(5) a = 0;
+let b = a;           // b will be a Bit#(5)
+let c = { 1'b0, a }; // c will be a Bit#(6) since we added a bit to a
+let d = 2'b11;       // d will be a Bit#(2)
+
+// INVALID
+let e = { '0, a }; // size of e can't be determined since '0 is unsized
+let f = 1;         // size of f can't be determined since 1 is unsized
+
+```
+
+#### Assignments are blocking
+
+One thing to note is that in these functions, statements execute like they would in many other programming languages: top to bottom. Re-assigning a variable another value will update its value for and only for future statements.
+
+```
+Bit#(2) x = 2'b10; // x = 2'b10
+Bit#(2) y = x;     // y = 2'b10
+x = 2'b11;         // x = 2'b11, y = 2'b10
+Bit#(2) z = x;     // z = 2'b11
+```
 
 ### Function structure
 
+Now that we know how to write variables in our function, let's talk about how the function is actually structured. A function consists of a declaration, variables, body, return value, and potentially some parameterization.
+
 #### Function Declaration
 
+A function is declared as followed:
+
+```
+function ReturnType functionName(ArgType1 argName1, ArgType2 argnName2, ... , ArgTypeN argNameN);
+	// Body of function here
+endfunction
+```
+
+A function can return exactly 1 value. If you want to return multiple values, then you can pack them into a user-defined type and extract the separate values from the fields of the return value.
+
+`function` and `endfunction` are Bluespec keywords that define the beginning and end of the function declaration.
+
+You can pass in any number of arguments to a function, including 0. The names you give to the arguments are the variable names for accessing the input values in the body of the function. Again, the scope of these variables is only inside the function.
+
+Below is an example declaration of a 4-bit adder function. The function take two 4-bit numbers (`a` and `b`) and a carry-in 1-bit value (`c`), and returns a 5-bit number that is equal to a+b+c.
+
+```
+function Bit#(5) add4(Bit#(4) a, Bit#(4) b, Bit#(1) c);
+	// body
+endfunction
+```
+
 #### Parameterization
+
+It's possible that you want to write multiple functions that do the exact same thing, but for different Bit widths. For example, in the adder example above, you might want to have an add2, add4, add8, and add16 function. Instead of rewriting the function for every Bit width, we can often generalize it by parameterizing the function, and then specifying when we pass in arguments to the function what value we want the parameter to take.
+
+We parameterize the function by replacing certain numeric types with variables. For our adder example, we could generalize it by writing
+
+```
+function Bit#(TAdd#(n,1)) addN(Bit#(n) a, Bit#(n) b, Bit#(1) c);
+	// body
+endfunction
+```
+
+This says that inputs `a` and `b` will be Bits of size n, c is a Bit of size 1, and the function will return a Bit of size n+1. (If you don't remember how the TAdd# function works, refer to the section on numeric type operations.) 
+
+You can then actually call your function by just passing in arguments of compatible bit widths. This can be done in several ways, as shown below.
+
+```
+// Here are your variables to add
+Bit#(4) a, b;
+Bit#(1) c;
+
+...
+... // assume variables are initialized to values somewhere :)
+...
+
+// You can call the general function as long sizeOf(a) = sizeOf(b) = sizeOf(sum) - 1
+Bit#(5) sum = addN(a, b, c);
+
+// The compiler can infer the size of the return type from the size of the inputs
+let sum = addN(a, b, c);
+
+// Alternatively, you can declare a specifically parameterized function
+function Bit#(5) add4(Bit#(4) a, Bit#(4) b, Bit#(1) c);
+	return addN(a, b, c);
+endfunction
+
+// Can now call the specific add4 function
+Bit#(5) sum = add4(a, b, c);
+
+// Again, the compiler can determine the size of the return type
+let sum = add4(a, b, c);
+
+// INVALID: The first two arguments need to be the same width
+let sum = addN(a, c, c);
+
+// INVALID: the return type needs to be 1 bit wider than the arguments
+Bit#(6) sum = addN(a, b, c);
+```
 
 #### Higher-level programming constructs
 
@@ -469,14 +606,10 @@ In Bluespec, we can create purely combinational (stateless and unclocked) circui
 
 #### Return statements
 
-### Functions
 
-Definition
-Parameterization
-Variable initialization
-Order of execution
 
-### Calling functions
+
+#### Calling functions
 
 ## Sequential Circuits
 
