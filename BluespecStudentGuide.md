@@ -555,7 +555,7 @@ It's possible that you want to write multiple functions that do the exact same t
 
 We parameterize the function by replacing certain numeric types with variables. For our adder example, we could generalize it by writing
 
-```
+```Bluespec
 function Bit#(TAdd#(n,1)) addN(Bit#(n) a, Bit#(n) b, Bit#(1) c);
 	// body
 endfunction
@@ -565,7 +565,7 @@ This says that inputs `a` and `b` will be Bits of size n, c is a Bit of size 1, 
 
 You can then actually call your function by just passing in arguments of compatible bit widths. This can be done in several ways, as shown below.
 
-```
+```bluespec
 // Here are your variables to add
 Bit#(4) a, b;
 Bit#(1) c;
