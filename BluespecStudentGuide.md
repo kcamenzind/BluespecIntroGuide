@@ -31,7 +31,7 @@ Comments are treated as whitespace, and can either be one-line comments:
 `// Your comment here`
 
 or multiline comments
-```
+```bluespec
 /* You can
 write comments
 across however many
@@ -41,7 +41,7 @@ lines! */
 
 Semicolons are needed after any expression. They are not needed, however, after **begin** and **end** keywords.
 
-```
+```bluespec
 // Needs semicolon
 x = 5;
 
@@ -88,7 +88,7 @@ endmodule
 
 The keywords `begin` and `end` are how we can lump multiple statements into one statement, mostly in conditionals and loops. For example, to assign two variables in an if statement, we need to write:
 
-```
+```bluespec
 // Correct syntax
 if (cond) begin
 	x = 1;
@@ -113,7 +113,7 @@ Bluespec has both built-in data types and user-defined data types. It's importan
 When we write programs, we often have to assign hard-coded numeric values to variables. It's best practice to write all Bluespec literals with explicit sizes, but it is possible to write both sized and unsized literals. Unsized literals are most useful when you want set a variable (or some section of a variable) to all 0's or all 1's, or when using Integers (since the Integer type is unsized anyway, more on that below).
 
 **Sized literals:**
-```
+```bluespec
 4'd10       // Decimal value 10, stored in 4 bits
 
 4'b1010     // Decimal value 10, stored in 4 bits
@@ -126,7 +126,7 @@ When we write programs, we often have to assign hard-coded numeric values to var
 ``` 
 
 **Unsized literals:**
-```
+```bluespec
 10  // Decimal value 10, unsized
 0   // Decimal value 0, unsized
 1   // Decimal value 1, unsized
@@ -143,7 +143,7 @@ Almost all variables in Bluespec represent, in the eventual circuit, some number
 
 Here are some of Bluespec's built-in types:
 
-```
+```bluespec
 Bit#(n)  // n bits
 Int#(n)  // n bits, interpreted as a signed number
 Uint#(n) // n bits, interpreted as an unsigned number
@@ -169,7 +169,7 @@ For example, you may want to rename Bit#(8) as Byte.
 
 You can also define your own types by defining a new type that is made up of other types. The syntax is:
 
-```
+```bluespec
 typedef struct {
 	OldType1 member1;
 	OldType2 member2;
@@ -178,7 +178,7 @@ typedef struct {
 
 You can instantiate this variable and access its fields as follows:
 
-```
+```bluespec
 OldType1 m1 = 2'b00;
 OldType2 m2 = some_value;
 
@@ -196,7 +196,7 @@ myNewVar.m1 = 2'b11;
 
 Enums are how we can define custom types that are defined by the compiler as bits, but we don't explicitly have to understand how they translate into bits. For example, if you want to define a type Color, which can take values Red, Green, Yellow and Blue, we can write
 
-```
+```bluespec
 typedef enum Color { Red, Green, Yellow, Blue } deriving (Bits, Eq); 
 ```
 
@@ -212,7 +212,7 @@ To extract convert an Integer to a Bit#(n) value, use `Bit#(n) x = fromInteger(i
 
 You can chain these together to store the value of a numeric type into a Bit#(n) as follows:
 
-```
+```bluespec
 Bit#(m) x = fromInteger(valueOf(n));
 ```
 
@@ -220,7 +220,7 @@ Bit#(m) x = fromInteger(valueOf(n));
 
 Lastly, you can extract the size of a Type (in bits) by using SizeOf. SizeOf returns a numeric type, which then you can then further convert into an Integer or Bit# depending on your use case. For example:
 
-```
+```bluespec
 Bit#(3) x = 0; // Size of x is 3 bits
 Integer i = valueOf(SizeOf(x)); // i = 3, converted from numeric type -> Integer
 ```
@@ -231,7 +231,7 @@ If a type is represented by Bits, then we can convert between these types and th
 
 To convert from Bit to any other type, use unpack:
 
-```
+```bluespec
 Bit#(3) x = 3'b101;     // x is the binary value 101
 UInt#(3) y = unpack(x); // y = 5, the UInt represented by the bits 101
 Int#(3) z = unpack(x);  // z = -3, the Int represented by the bits 101
@@ -239,7 +239,7 @@ Int#(3) z = unpack(x);  // z = -3, the Int represented by the bits 101
 
 To convert from any type to Bit, use pack:
 
-```
+```bluespec
 typedef enum Color { Red, Green, Blue, Yellow } deriving (Bits, Eq);
 
 Color red = Red;
@@ -258,14 +258,14 @@ Bits are stored as a string of bits, indexed from the MSB to LSB. For example, i
 
 To access a parameterized Bit, we can use the numeric type -> Integer conversion discussed above. For example:
 
-```
+```bluespec
 Bit#(n) x_param = 1; // x = 1, has n-1 leading zeros
 Bit#(1) x_msb = x_param[valueOf(n)-1]; // x_msb is the top bit of x_param
 ```
 
 We can also take slices of Bits. For example:
 
-```
+```bluespec
 Bit#(4) x = 4'b1010;
 Bit#(4) y = x;      // y = 4'b1010 
 Bit#(4) z = x[3:0]; // z = 4'b1010
@@ -277,7 +277,7 @@ Note that with bit indexing, it's generally recommended to use constants as the 
 
 Some examples:
 
-```
+```bluespec
 Integer fixed_i = 2;   // Value of fixed_i known at compile time
 Bit#(2) dynamic_i = 3; // Value of dynamic_i not known at compile time
 Bit#(4) x = 4'b1001;
@@ -298,7 +298,7 @@ Bit#(2) g = x[dynamic_i:0];           // NOT OK, cannot guarantee that sizes wil
 
 We can combine strings of bits into longer strings of bits. To concatenate two Bits, use the following notation:
 
-```
+```bluespec
 Bit#(2) a = 2'b11;
 Bit#(3) b = 3'b001;
 
@@ -318,7 +318,7 @@ Sometimes it can be useful to add arbitrary numbers of 0's or 1's to the beginni
 
 For example:
 
-```
+```bluespec
 Bit#(4) x = 4'b1001;
 
 // Extend x to 6 bits
@@ -341,7 +341,7 @@ We can also accomplish the functionality through two built-in Bluespec functions
 
 We can truncate bits by explicitly indexing the number of bits that we want. However, we can also use the built-in truncate function. For example:
 
-```
+```bluespec
 Bit#(5) x = 5'b10011;
 Bit#(4) y = truncate(x); // y = 4'b0011
 Bit#(2) z = truncate(x); // z = 2'b11
@@ -360,7 +360,7 @@ Bitwise operators operate bit-by-bit on numbers. If the operator takes two argum
 ^: bitwise-XOR
 ~: bitwise-NOT
 
-```
+```bluespec
 Bit#(4) a = 4'b0011;
 Bit#(4) b = 4'b0101;
 Bit#(4) c = a & b; // c = 4'b0001;
@@ -377,7 +377,7 @@ Each of these bitwise-operators has a logical equivalent. Logical operators perf
 ||: logical OR
 ! : logical NOT
 
-```
+```bluespec
 Bit#(4) a = 4'b0101;
 Bit#(4) b = 4'b0000;
 
@@ -392,7 +392,7 @@ Bit#(1) g = !b;     // g = 1 singe b == 0
 The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if cond==True, and val2 if cond==False. The cond must evaluate to the Boolean (not Bit) type.
 
 Example:
-```
+```bluespec
 Bit#(1) s = 1'b0;
 Bit#(2) a = 2'b11;
 Bit#(2) b = 2'b01;
@@ -440,7 +440,7 @@ TODO: Figure out the actual rules for arithmetic when numbers are different size
 
 When we have parameterized types, we sometimes want to define variable widths based on some function of the the parameter width. There are built-in functions for doing basic arithemetic operations on numeric types.
 
-```
+```bluespec
 Bit#(n) x; Bit#(m) y; // x is n bits wide, y is m bits wide
 
 Bit#(TAdd#(n, m)) a; // a is n + m bits wide
@@ -477,7 +477,7 @@ This also means that the scope of a declared variable is only the function that 
 
 Variables must be assigned values to be used. Generally, you will include an initial value in its declaration. If you don't, then you should always make sure taht the variable is assigned a value before it's used.
 
-```
+```bluespec
 TypeName variableName = initialValue; // Initializes variableName to initialValue
 
 // Alternate way of assigning initalValue
@@ -498,7 +498,7 @@ It's good practice to explicitly declare your variable sizes. However, you can a
 
 For example
 
-```
+```bluespec
 Bit#(5) a = 0;
 let b = a;           // b will be a Bit#(5)
 let c = { 1'b0, a }; // c will be a Bit#(6) since we added a bit to a
@@ -514,7 +514,7 @@ let f = 1;         // size of f can't be determined since 1 is unsized
 
 One thing to note is that in these functions, statements execute like they would in many other programming languages: top to bottom. Re-assigning a variable another value will update its value for and only for future statements.
 
-```
+```bluespec
 Bit#(2) x = 2'b10; // x = 2'b10
 Bit#(2) y = x;     // y = 2'b10
 x = 2'b11;         // x = 2'b11, y = 2'b10
@@ -529,7 +529,7 @@ Now that we know how to write variables in our function, let's talk about how th
 
 A function is declared as followed:
 
-```
+```bluespec
 function ReturnType functionName(ArgType1 argName1, ArgType2 argnName2, ... , ArgTypeN argNameN);
 	// Body of function here
 endfunction
@@ -543,7 +543,7 @@ You can pass in any number of arguments to a function, including 0. The names yo
 
 Below is an example declaration of a 4-bit adder function. The function take two 4-bit numbers (`a` and `b`) and a carry-in 1-bit value (`c`), and returns a 5-bit number that is equal to a+b+c.
 
-```
+```bluespec
 function Bit#(5) add4(Bit#(4) a, Bit#(4) b, Bit#(1) c);
 	// body
 endfunction
@@ -555,7 +555,7 @@ It's possible that you want to write multiple functions that do the exact same t
 
 We parameterize the function by replacing certain numeric types with variables. For our adder example, we could generalize it by writing
 
-```Bluespec
+```bluespec
 function Bit#(TAdd#(n,1)) addN(Bit#(n) a, Bit#(n) b, Bit#(1) c);
 	// body
 endfunction
