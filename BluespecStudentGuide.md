@@ -50,38 +50,38 @@ if (y) x = 5;
 
 // Whitespace doesn't matter, this is still 1 expression = 1 semicolon
 if (y)
-	x = 5;
+    x = 5;
 
 // Semicolons not needed after keywords begin and end
 if (y) begin
-	x = 5;
+    x = 5;
 end
 
 // For loops work similarly to if statements
 for (Integer i = 0; i < max; i = i + 1) begin
-	do_something();
-	do_something_else();
+    do_something();
+    do_something_else();
 end
 
 // Function declarations need semicolons, end statements do not.
 function ReturnType fnName(Type var1, Type var2);
-	some_stuff();
+    some_stuff();
 endfunction
 
 // Module declarations need semicolons, endmodule does not
 module mkMyModule();
-	// State declarations also need semicolons
-	Reg#(Bit#(n)) myReg <- mkRegU;
+    // State declarations also need semicolons
+    Reg#(Bit#(n)) myReg <- mkRegU;
 
-	// Same thing with rules
-	rule doSomething;
-		do_some_stuff();
-	endrule
+    // Same thing with rules
+    rule doSomething;
+        do_some_stuff();
+    endrule
 
-	// And with methods!
-	method Type myMethod();
-		do_some_other_stuff();
-	endmethod
+    // And with methods!
+    method Type myMethod();
+        do_some_other_stuff();
+    endmethod
 endmodule
 
 ```
@@ -91,15 +91,15 @@ The keywords `begin` and `end` are how we can lump multiple statements into one 
 ```bluespec
 // Correct syntax
 if (cond) begin
-	x = 1;
-	y = 2;
+    x = 1;
+    y = 2;
 end
 
 // Incorrect syntax, y is not part of the conditional
 // and will always be assigned 2
 if (cond)
-	x = 1;
-	y = 2;
+    x = 1;
+    y = 2;
 ``` 
 
 ## Bluespec Variables, Types, and Operators
@@ -146,7 +146,7 @@ Here are some of Bluespec's built-in types:
 ```bluespec
 Bit#(n)  // n bits
 Int#(n)  // n bits, interpreted as a signed number
-Uint#(n) // n bits, interpreted as an unsigned number
+UInt#(n) // n bits, interpreted as an unsigned number
 Bool     // True or False (1 bit)
 Integer  // unsized number, only used in static elaboration
 ```
@@ -171,8 +171,8 @@ You can also define your own types by defining a new type that is made up of oth
 
 ```bluespec
 typedef struct {
-	OldType1 member1;
-	OldType2 member2;
+    OldType1 member1;
+    OldType2 member2;
 } NewType;
 ```
 
@@ -469,9 +469,9 @@ Variables are declared in code as follows:
 
 `TypeName variableName;`
 
-Variables must be declared in the function definition, or within the function. You cannot declare a global variable, as there is no such thing as a "global variable" in hardware, since the function itself should encapsulate an entire combinational circuit. 
+Variables must be declared in the function definition, or within the function. You cannot declare a global variable in a file, as there is no such thing as a "global variable" in hardware, since the function itself should encapsulate an entire combinational circuit. (This isn't entirely true once we move onto sequential circuits, but more on that later.)
 
-This also means that the scope of a declared variable is only the function that it is declared in.
+This also means that the scope of a declared variable is only within the function that it is declared in.
 
 #### Variable assignment
 
@@ -531,7 +531,7 @@ A function is declared as followed:
 
 ```bluespec
 function ReturnType functionName(ArgType1 argName1, ArgType2 argnName2, ... , ArgTypeN argNameN);
-	// Body of function here
+    // Body of function here
 endfunction
 ```
 
@@ -545,7 +545,7 @@ Below is an example declaration of a 4-bit adder function. The function take two
 
 ```bluespec
 function Bit#(5) add4(Bit#(4) a, Bit#(4) b, Bit#(1) c);
-	// body
+    // body
 endfunction
 ```
 
@@ -557,7 +557,7 @@ We parameterize the function by replacing certain numeric types with variables. 
 
 ```bluespec
 function Bit#(TAdd#(n,1)) addN(Bit#(n) a, Bit#(n) b, Bit#(1) c);
-	// body
+    // body
 endfunction
 ```
 
@@ -582,7 +582,7 @@ let sum = addN(a, b, c);
 
 // Alternatively, you can declare a specifically parameterized function
 function Bit#(5) add4(Bit#(4) a, Bit#(4) b, Bit#(1) c);
-	return addN(a, b, c);
+    return addN(a, b, c);
 endfunction
 
 // Can now call the specific add4 function
@@ -600,63 +600,365 @@ Bit#(6) sum = addN(a, b, c);
 
 #### Higher-level programming constructs
 
-##### for loops
-##### if/else
-##### case
+##### For loops
+
+You can add for loops to your program! You can do so with the following syntax:
+
+```
+// General syntax
+for (Type iter_val = initial_val; cond; iter_val = f(iter_val)) begin
+    // Stuff to do in for loop.
+    // Loop will continue if cond==True, and will apply f(iter_val) at the end of every loop cycle
+end
+
+// Example for loop. Will initialize i to 0, and then execute as long as i < 10,
+// with i incrementing at the end of every loop execution.
+for (Integer i = 0; i < 5; i = i + 1) begin
+    count = count + i;
+end 
+
+// Example for loop in a parameterized function (where n is a numeric type).
+for (Integer i = 0; i < valueOf(n); i = i + 1) begin
+    // Do something
+end
+```
+
+One thing to note is that loops are unrolled at compile-time. This means that what this above function actually does is the following:
+
+```
+i = 0;              // i = 0
+count = count + i;
+i = i + 1;          // i = 1
+count = count + i;
+i = i + 1;          // i = 2
+count = count + i;
+i = i + 1;          // i = 3
+count = count + i;
+i = i + 1;          // i = 4
+count = count + i;
+```
+
+Another thing to note is the use of the Integer type in the for loop. We use Integers because they're unsized so we don't have to worry about if we're using enough bits. At the same time, since the loop is unrolled, it's ok to use an Integer because i won't ever actually change values in the compiled circuit, it just becomes a hard-coded constant for each iteration of the loop.
+
+We generally want to keep the bounds of our for loop to a constant, because otherwise our circuit has to unroll every possible iteration of the for loop and put a mux on every iteration deciding whether that iteration is the final one or not. In code:
+
+```
+Bit#(5) max = get_max(); // value of max is unknown at compile time
+
+// BAD: Compiler has to unroll 2^5 loops and then dynamically
+// decide after which iteration to take the value of res
+for (Integer i = 0; i < max; i = i + 1)
+    res = f(res);
+end
+```
+
+##### If-else statements
+
+If-else statements are just like any other language.
+
+```
+if (cond1) begin
+    // Will execute if cond1==True
+end else if (cond2) begin
+    // Will execute if cond1==False and cond2==True
+end else begin
+    // Will execute if cond1==False and cond2==False
+end
+
+// We can also one-line these statements if only one action needs to happen.
+if (cond1) doSomething;
+else if (cond2) doSomethingElse;
+// Don't need to have a default else statement.
+```
+
+##### Case
+
+The case statement is a shorthand way of writing long if/else blocks. The syntax is as follows:
+
+```
+Type switch = some_val;
+
+// This case conditionally executes statements based on which value switch matches.
+// The default value executes if no other value is matches, and is not always needed.
+case (switch)
+    val1: do1();    // do1() executes if (switch==val1)
+    val2: begin     // do2() and do3() execute if (switch==val2)
+        do2();
+        do3();
+    end
+    default: do4(); // do4() executes if (switch!=val1) && (switch!=val2)
+endcase
+
+// This case conditionally sets to a value based on which value switch matches.
+let x = case (switch)
+    val1: xval1;    // x = xval1 if (switch==val1)
+    val2: xval2;    // x = xval2 if (switch==val2)
+    default: xval3; // x = xval3 if (switch!=val1) && (switch!=val2)
+endcase;            // Note the semicolon here
+```
 
 #### Return statements
 
+You can have return statements anywhere in your function. However, note that you must have a return statement, so there cannot be a possible path where your function will not return a value.
 
+```
+// Best to put your return value at the end.
+function ReturnType fnName(args...);
+    ReturnType res;
+    if (cond1) res = val1;
+    else res = val2;
+    return res;
+endfunction
 
+// Also ok to return from every branch of an if-else
+function ReturnType fnName(args...);
+    if (cond1) return val1;
+    else return val2;
+endfunction
 
-#### Calling functions
+// Also ok to have a default return statement
+function ReturnType fnName(args...);
+    if (cond1) return val1;
+    else if (cond2) return val2;
+    return val3;
+endfunction
+
+// BAD: if cond1==False and cond2==False, no return statement
+function ReturnType fnName(args...);
+    if (cond1) return val1;
+    else if (cond2) return val2;
+endfunction
+```
+
+#### Note on Calling Functions
+
+You can call a function from within another function, or from within a module's rule or method (to be explained in the next function). Every time you write a function call, it generates a new instance of that combinational circuit (there's no sharing of an instance of a function across separate calls). This means if you have the following code, generating an instance of `myOtherFunc` will have in it two instances of `myFunc`.
+
+```
+function ReturnType1 myFunc(ArgType arg1);
+    // Some stuff
+endfunction
+
+function ReturnType myOtherFunc();
+    if (cond1) myFunc(val1);
+    else myFunc(val2);
+endfunction
+```
+
+TODO: with the compiler is this actually true, can it not figure out that it can just mux the input? 
 
 ## Sequential Circuits
 
+Up to this point, we've only talked about writing code to generate circuits that have no concept of time or state. We'll now take a look at how we can use Bluespec to describe sequential circuits, which are cycle-driven (by an implicit clock--we're going to skip in this guide talking about designs that use multiple clocks) and can store state across cycles.
+
 ### Interfaces
+
+Interfaces define the inputs and outputs to class of sequential circuits. An interface consists of 1 or more method declarations, where each method defines a subset of the inputs and outputs to the circuit, and has a specific function. The exact implementation of the function is not defined in the interface, it will be defined later by a module (talked about in the next section) that implements the interface.
+
+```bluespec
+// Basic interface declaration
+interface InterfaceName;
+    method MethodType method1name(ArgType1 arg1, ArgType2 arg2 ... );
+    method MethodType method2name(ArgType3 arg1, ArgType4 arg2 ... );
+    ...
+    method MethodType methodNname(); // methods don't have to have inputs
+endinterface
+```
+
+You can also parameterize interfaces as shown below. This can be a parameterization similar to function we've seen where we want to use the interface for varying Bit widths, but can also be used for things like FIFOs where you want to have an interface that describes all FIFOs regardless of the data type stored in it.
+
+```bluespec
+// Parameterized interface declaration
+interface ParamInterfaceName#(type typeName); // type is a keyword, typeName is your name for the type
+    method MethodType regularMethodName;
+    method MethodType#(typeName) paramMethodName; // Pass the type parameter into methods as needed
+endinterface
+```
+
+#### Method Types
+
+There are three different types of methods. The type of method defines some implicit inputs/outputs to the sequential circuit, specifically whether there is an enable signal and whether there is a return value (output).
+
+All methods have an implicit *ready* signal. This signal tells the outside world when the sequential circuit is in a valid state for the method to be called. Some circuits may have their ready signals always set to True, but that's unrelated to the interface, so more on that later.
+
+##### Action Methods
+
+Action methods alter the internal state of the circuit, which means that there is an enable signal. When the method is called, the enable signal will go high, which tells the circuit to change its state based on its current state and the method inputs. An Action method is declared as follows:
+
+```bluespec
+method Action actionMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
+```
+
+##### Value Methods
+
+Value methods do not alter the internal state of the circuit, so there's no enable signal because nothing in the circuit needs to change when the method is called. Instead, value methods just output some value generated in the circuit. Value methods are declared as follows:
+
+```bluespec
+method ReturnType valueMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
+```
+
+##### ActionValue Methods
+
+ActionValue methods both alter the internal state of the circuit and return a value from the circuit. This means there is both an enable signal, and an output (return) value. ActionValue methods are declared as follows:
+
+```bluespec
+method ActionValue#(ReturnType) avMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
+```
+
+#### Empty Interface
+
+An interface with no methods is built into Bluespec, and is called `Empty`. This is useful for creating top-level modules and testbenches.
 
 ### Modules
 
-Implicit clocks, once-per-cycle
+Modules are implementation of interfaces, and so they are how we actually define how the sequential circuit works. Modules have three components:
+    * Internal state (registers)
+    * Methods (inputs and outputs)
+    * Rules (internal logic)
 
-### Internal State (registers)
+Again, we're going to only talk about sequential circuits that use one clock domain, so the clock is implicit and we can think of modules on a timestep basis. What this means is that on every clock cycle (or timestep), the internal state and inputs are read, and then some actions are conditionally executed, and the some new values are conditionally written back to the internal state. Then, on the next timestep, the same thing repeats, using the new state and new inputs.
 
-instantiation
-initial values
-what types can registers store
-read/write syntax
-update at end of cycle
-Also vectors
-modules within modules
+#### Module Declaration
 
-### Methods and Ruels
+A module declaration and implementation follows the following structure. Note that the name of a module is always prefixed by mk, which stands for "make".
 
-Both:
+```bluespec
+// Basic module declaration
+module mkModuleName(InterfaceName);
+    // Internal state here
+
+    // Rules here
+
+    // Methods here
+endmodule
+```
+
+If our module or interface includes parameterizations, here are alternate module declarations:
+
+```bluespec
+// Interface is parameterized, module is not. For example, if the module implements
+// a specific parameterization of the interface.
+module mkModuleName(InterfaceName#(InterfaceParamType));
+
+// Interface and module are both parameterized. Often ModuleParamType and InterfaceParamType
+// will be the same. For example, a parameterized FIFO module that can be instantiated
+// to store any data type.
+module mkModuleName#(ModuleParamType) (Interface#(InterfaceParamType));
+
+// Module is parameterized, interface is not. For example, a non-parameterizable interface,
+// but the module that implements it includes a FIFO with parameterizable depth.
+module mkModuleName#(ModuleParamType) (Interface);
+```
+
+#### Internal State
+
+Any module instantiated within a module is considered internal state, since every sequential module has internal state. The most basic unit of internal state in Bluespec is the register (a built-in Bluespec module), which only consists of two methods, read and write, and stores whatever values are written to it. However, the module can have any collection of registers, vectors of registers, or other modules as internal state.
+
+##### Instantiating Internal State
+
+Internal state should be instantiated at the beginning of a module. We need to declare the internal state just like we would any variable in a function, but to initialize the value, we use a new operator, `<-`, to actually create an instantiation of the module.
+
+```bluespec
+Reg#(Bit#(1)) myReg <- mkRegU();            // Creates a register storing 1 bit, undefined initial value
+Reg#(Bool) myRegFlag <- mkReg(False);       // Creates a register storing a Bool, initialized to False
+Reg#(Bit#(4)) myRegValue <- mkReg(4'b1001); // Creates a register storing 4 bits, initialzed to 4'b1001
+
+ModuleName myModule <- mkModuleName();      // Creates an instance of the module ModuleName
+```
+
+The initial values stored in registers are the reset values for the registers, and are only relevant when you first instantiate the circuit. As soon as you write to the register, the initial value becomes irrelevant. For registers that store data, we often can just not specify an initial value (as this results in less hardware). Sometimes, however, we need to define an initial state so that our circuit starts up correctly. For example, if we have an FSM that uses a `busy` flag, and the `start` method can't be called while `busy=True`, then we need to make sure that `busy` is initialized to `False`.
+
+##### Registers
+
+The most basic module in Bluespec is the register: `Reg#(Type)`. A register can hold any type in the Bits class (including user-defined types deriving Bits, etc.) and we can instantiate any number of registers in our module.
+
+A register has only two methods: `_read` and `_write`. Since it's such a commonly used module, however, there's a shorthand for these two methods. If we have a 2-bit register `x`:
+
+`let y = x;` is equivalent to `let y = x._read();`
+`x <= 2'b00;` is equivalent to `x._write(2'b00);`
+
+When you read from a register, it returns the value of the data stored in the register. When you write data to a register, the new data value does not appear until the next cycle. So if a 1-bit register `x` is currently `0`, and in some rule/method (explained later) we have:
+
+```bluespec
+x <= 1; // write 1 to x
+y = x;  // read x into y
+```
+
+this is the same as 
+
+```bluespec
+x._write(1);
+y = x._read();
+```
+
+and the end value of `y` will be 0, not 1, because writes to `x` don't happen until the end of the cycle, while reads happen at the beginning of the cycle. Note that `y` has to be an intermediate wire, not a register, because we're using `=` assignment, which isn't valid for registers. If `y` was a register and we wanted to read the value of `x` into `y`, we would need to do:
+
+```bluespec
+x <= 1; // write 1 to x
+y <= x; // read x into y
+``` 
+
+NOTE: In this second example, the value of `x` will not appear in `y` until the end of the cycle! So if we were to read `y` on the next line, it would still return the old value.
+
+##### Vectors
+
+Sometimes we want to declare an array of registers of the same size. For example, if we have a buffer of length n, we need an array of n registers to store our data. Bluespec has another built-in type, Vector, that we can use for this purpose, that has the following declaration:
+
+```bluespec
+Vector#(n, ElementType);
+```
+where n is the number of elements in the array, and ElementType is the type of elements in the array.
+
+If we want to actually instantiate a Vector of Registers, we would do so as follows:
+
+```bluespec
+// Instantiate a 5-element Vector of n-bit registers with uninitialized values
+Vector#(5, Reg#(Bit#(n))) myVec1 <- replicateM(mkRegU());
+
+// Instantiate an n-element Vector of 5-bit registers initialized to all 0's
+Vector#(n, Reg#(Bit#(5))) myVec2 <- replicateM(mkReg(0));
+```
+
+Note: To use Vectors, you have to import the Vector package by adding the following line to the top of your file:
+
+```bluespec
+import Vector :: * ;
+```
+
+#### Methods and Rules
+
+Methods and bodies are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside worlds gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
+
+Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state. Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires).
+
+
 guards, implicit and explicit
 atomicity
 no double-reads or double-writes
 
-#### Methods
+##### Methods
 
 called by outside world
 
-#### Rules
+##### Rules
 
 happens whenever it can
 
-### Scheduling
+#### Rule scheduling
 
-Conflict with no ordering that works
 
 ## Program Structure
 
-### Synthesizable modules
-### Testbenches (top-level)
+## Additional Topics (coming soon)
 
-## Additional Features
-
-### Debugging
-#### Provisos
+#### Rule conflicts
+#### Testbenches
+#### Debugging
+#### Common Error Messages
 #### Display statements
+#### Provisos
 #### Recursion
-#### Don't care and Maybe values
+#### Don't care values
+#### Maybe values
+#### Case matches
+#### Synthesize
