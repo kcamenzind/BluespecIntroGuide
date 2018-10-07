@@ -338,7 +338,7 @@ When indexing with dynamic values, there's also always the danger of the indexin
 
 *Additional Note on Bit slicing*
 
-While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable width.s
+While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable widths.
 
 ##### Concatenating Bits
 
@@ -982,9 +982,6 @@ import Vector :: * ;
 Methods and rules are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside world gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
 
 Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires). Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state. 
-
-guards, implicit and explicit
-no double-reads or double-writes
 
 ##### Methods
 
