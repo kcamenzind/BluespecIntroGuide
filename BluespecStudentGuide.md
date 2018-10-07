@@ -1,4 +1,4 @@
-# Bluespec User Guide (6.004)
+# Intro Bluespec User Guide
 
 ## Overview
 
@@ -37,9 +37,10 @@ write comments
 across however many
 lines! */
 ```
+
 ### Semicolons and blocks
 
-Semicolons are needed after any expression. They are not needed, however, after **begin** and **end** keywords.
+Semicolons are needed after any expression. They are not needed, however, after **begin** and **end** keywords. Here are some examples for your reference:
 
 ```bluespec
 // Needs semicolon
@@ -86,7 +87,7 @@ endmodule
 
 ```
 
-The keywords `begin` and `end` are how we can lump multiple statements into one statement, mostly in conditionals and loops. For example, to assign two variables in an if statement, we need to write:
+The keywords `begin` and `end` are how we can lump multiple statements into one statement, mostly used in conditionals, loops, and case statements. For example, to assign two variables in an if statement, we need to write:
 
 ```bluespec
 // Correct syntax
@@ -106,11 +107,11 @@ if (cond)
 
 ### Data Types
 
-Bluespec has both built-in data types and user-defined data types. It's important to remember that no matter what data type you're using in your code, when it's compiled to hardware everything is just stored as bits. What the types do is allow you to not have to worry about the underlying structure of those bits.
+Bluespec has both built-in data types and user-defined data types. No matter what data type you're using in your code, when it gets synthesized to hardware everything is just stored as bits. However, types allow us to focus on the value of our variables rather than how they'll translate into bits.
 
 #### Literals
 
-When we write programs, we often have to assign hard-coded numeric values to variables. It's best practice to write all Bluespec literals with explicit sizes, but it is possible to write both sized and unsized literals. Unsized literals are most useful when you want set a variable (or some section of a variable) to all 0's or all 1's, or when using Integers (since the Integer type is unsized anyway, more on that below).
+When we write programs, we often have to assign hard-coded numeric values to variables. It's good practice to write all Bluespec literals with explicit sizes, but it is possible to write both sized and unsized literals. Unsized literals are most useful when you want set a variable (or some section of a variable) to all 0's or all 1's, or when using Integers (since the Integer type is unsized anyway, more on that below).
 
 **Sized literals:**
 ```bluespec
@@ -273,26 +274,28 @@ Bit#(3) lower_bits = x[2:0]; // lower_bits = 3'b010;
 Bit#(3) upper_bits = x[3:1]; // upper_bits = 3'b101;
 ```
 
-Note that with bit indexing, it's generally recommended to use constants as the indices. There are cases (particularly in for loops) where it's ok to extract bits with a variable, and other cases where's it's allowed but extremely inefficient. Bit slicing with a non-constant variable is illegal.
+Note that with bit indexing, it's generally recommended to use constants as the indices. There are cases (particularly in for loops) where it's ok to extract bits with a variable, and other cases where's it's allowed but inefficient. Bit slicing with a non-constant variable is illegal.
 
 Some examples:
 
 ```bluespec
-Integer fixed_i = 2;   // Value of fixed_i known at compile time
-Bit#(2) dynamic_i = 3; // Value of dynamic_i not known at compile time
+Integer fixed_i = 2;   // Value of fixed_i known at compile time because it's an Integer
+Bit#(2) dynamic_i = 3; // Value of dynamic_i not known at compile time because it's a Bit#
 Bit#(4) x = 4'b1001;
 
 // Indexing
 Bit#(1) a = x[fixed_i];   // OK, fixed_i is a fixed value
 Bit#(1) b = x[fixed_i-1]; // OK, fixed_i-1 is a fixed value
-Bit#(1) c = x[dynamic_i]; // OK but slightly inefficient, dynamic_i isn't a fixed value
+Bit#(1) c = x[dynamic_i]; // OK but inefficient, dynamic_i isn't a fixed value
 
 // Slicing
 Bit#(2) d = x[i:i-1];                 // OK, fixed-size and fixed-value slice
 Bit#(2) e = x[dynamic_i:dynamic_i-1]; // OK but inefficient, fixed-size but non-fixed-value slice
 Bit#(2) f = x[fixed_i:0];             // ONLY OK if i=1 to guarantee sizes match
-Bit#(2) g = x[dynamic_i:0];           // NOT OK, cannot guarantee that sizes will match
+Bit#(2) g = x[dynamic_i:0];           // BAD, no guarantee that sizes will match
 ``` 
+
+When indexing with dynamic values, there's also always the danger of the indexing out of range. For example, if you have a Bit#(3), you have to index with at least 2 bits to cover values 2'b00, 2'b01, and 2'b10. However, if the index takes the value 2'b11, then this is out of the range of the bit string.
 
 ##### Concatenating Bits
 
@@ -356,8 +359,11 @@ There are several built-in operators for built-in Bluespec types.
 Bitwise operators operate bit-by-bit on numbers. If the operator takes two arguments, so `a = b OP c`, then this is equivalent to writing `a[i] = b[i] OP c[i]` for every i from 0 to n-1. (Notice that a, b, and c must all be the same size.)
 
 &: bitwise-AND
+
 |: bitwise-OR
+
 ^: bitwise-XOR
+
 ~: bitwise-NOT
 
 ```bluespec
@@ -374,7 +380,9 @@ Bit#(4) f = ~a;    // f = 4'b1100;
 Each of these bitwise-operators has a logical equivalent. Logical operators perform the same operations as the bitwise operators, but instead of performing them bit-by-bit, it evaluates the entire variables as 0 if all the bits are 0, and 1 otherwise.
 
 &&: logical AND
+
 ||: logical OR
+
 ! : logical NOT
 
 ```bluespec
@@ -389,7 +397,7 @@ Bit#(1) g = !b;     // g = 1 singe b == 0
 
 #### Ternary operator
 
-The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if cond==True, and val2 if cond==False. The cond must evaluate to the Boolean (not Bit) type.
+The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if `cond==True`, and val2 if `cond==False`. The cond must evaluate to the Boolean (not Bit#(1)) type.
 
 Example:
 ```bluespec
@@ -405,8 +413,6 @@ Bit#(2) y = (s==1'b1) ? a : b; // y = b since s!=1'b1
 
 You can use arithmetic operators on many types. If the operator does different things depending on whether the number is signed or unsigned, then you probably want to specify the value explicitly as an Int or UInt.
 
-TODO: Figure out the actual rules for arithmetic when numbers are different sizes or signed vs unsigned
-
 `a + b` : Addition
 
 `a - b` : Subtraction
@@ -420,6 +426,8 @@ TODO: Figure out the actual rules for arithmetic when numbers are different size
 `a << b` : Left shift
 
 `a >> b` : Right shift
+
+TODO: Describe the rules for what happens when there are size mismatches, sign mismatches, etc.
 
 ##### Comparators
 
@@ -489,7 +497,7 @@ else var1 = init2;
 TypeName var2;
 if (cond) var2 = init1;
 ...
-y = f(var2); // var2 doesn't have a value if cond=False !
+y = f(var2); // var2 doesn't have a value if cond=False
 ```
 
 #### let
@@ -602,7 +610,7 @@ Bit#(6) sum = addN(a, b, c);
 
 ##### For loops
 
-You can add for loops to your program! You can do so with the following syntax:
+You can add for loops to your program! Syntax is as follows:
 
 ```bluespec
 // General syntax
@@ -623,7 +631,7 @@ for (Integer i = 0; i < valueOf(n); i = i + 1) begin
 end
 ```
 
-One thing to note is that loops are unrolled at compile-time. This means that what this above function actually does is the following:
+One thing to note is that loops are unrolled at compile-time. This means that what the second for-loop above actually does is the following:
 
 ```bluespec
 i = 0;              // i = 0
@@ -668,7 +676,7 @@ end
 // We can also one-line these statements if only one action needs to happen.
 if (cond1) doSomething;
 else if (cond2) doSomethingElse;
-// Don't need to have a default else statement.
+// Default else statement is optional.
 ```
 
 ##### Case
@@ -1059,7 +1067,7 @@ module mkMyModule;
 endmodule
 ```
 
-## Additional Topics (coming soon)
+## Additional/Advanced Topics (TODO)
 
 #### Program Structure (scoping, visibility, file structure, etc.)
 #### Rule conflicts and scheduling
