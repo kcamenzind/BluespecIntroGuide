@@ -313,7 +313,7 @@ Bit#(3) lower_bits = x[2:0]; // lower_bits = 3'b010;
 Bit#(3) upper_bits = x[3:1]; // upper_bits = 3'b101;
 ```
 
-Note that with bit indexing, it's generally recommended to use constants as the indices. There are cases (particularly in for loops) where it's ok to extract bits with a variable, and other cases where's it's allowed but inefficient. Bit slicing with a non-constant variable is illegal.
+Note that with bit indexing, it's generally recommended to use constants as the indices. There are cases (particularly in for loops) where it's ok to extract bits with a variable, and other cases where's it's allowed but requires a large amount of hardware. Variable-sized bit slicing is illegal, since this would require a variable-sized variable.
 
 Some examples:
 
@@ -335,6 +335,10 @@ Bit#(2) g = x[dynamic_i:0];           // BAD, no guarantee that sizes will match
 ``` 
 
 When indexing with dynamic values, there's also always the danger of the indexing out of range. For example, if you have a Bit#(3), you have to index with at least 2 bits to cover values 2'b00, 2'b01, and 2'b10. However, if the index takes the value 2'b11, then this is out of the range of the bit string.
+
+*Additional Note on Bit slicing*
+
+While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable width.s
 
 ##### Concatenating Bits
 
