@@ -604,7 +604,7 @@ Bit#(6) sum = addN(a, b, c);
 
 You can add for loops to your program! You can do so with the following syntax:
 
-```
+```bluespec
 // General syntax
 for (Type iter_val = initial_val; cond; iter_val = f(iter_val)) begin
     // Stuff to do in for loop.
@@ -625,7 +625,7 @@ end
 
 One thing to note is that loops are unrolled at compile-time. This means that what this above function actually does is the following:
 
-```
+```bluespec
 i = 0;              // i = 0
 count = count + i;
 i = i + 1;          // i = 1
@@ -642,7 +642,7 @@ Another thing to note is the use of the Integer type in the for loop. We use Int
 
 We generally want to keep the bounds of our for loop to a constant, because otherwise our circuit has to unroll every possible iteration of the for loop and put a mux on every iteration deciding whether that iteration is the final one or not. In code:
 
-```
+```bluespec
 Bit#(5) max = get_max(); // value of max is unknown at compile time
 
 // BAD: Compiler has to unroll 2^5 loops and then dynamically
@@ -656,7 +656,7 @@ end
 
 If-else statements are just like any other language.
 
-```
+```bluespec
 if (cond1) begin
     // Will execute if cond1==True
 end else if (cond2) begin
@@ -675,7 +675,7 @@ else if (cond2) doSomethingElse;
 
 The case statement is a shorthand way of writing long if/else blocks. The syntax is as follows:
 
-```
+```bluespec
 Type switch = some_val;
 
 // This case conditionally executes statements based on which value switch matches.
@@ -701,7 +701,7 @@ endcase;            // Note the semicolon here
 
 You can have return statements anywhere in your function. However, note that you must have a return statement, so there cannot be a possible path where your function will not return a value.
 
-```
+```bluespec
 // Best to put your return value at the end.
 function ReturnType fnName(args...);
     ReturnType res;
@@ -732,9 +732,9 @@ endfunction
 
 #### Note on Calling Functions
 
-You can call a function from within another function, or from within a module's rule or method (to be explained in the next function). Every time you write a function call, it generates a new instance of that combinational circuit (there's no sharing of an instance of a function across separate calls). This means if you have the following code, generating an instance of `myOtherFunc` will have in it two instances of `myFunc`.
+You can call a function from within another function, or from within a module's rule or method (to be explained in the next function). Every time you write a function call, it generates a new instance of that combinational circuit; there's no sharing of an instance of a function across separate calls. This means if you have the following code, generating an instance of `myOtherFunc` will have in it two instances of `myFunc`.
 
-```
+```bluespec
 function ReturnType1 myFunc(ArgType arg1);
     // Some stuff
 endfunction
@@ -812,6 +812,7 @@ An interface with no methods is built into Bluespec, and is called `Empty`. This
 ### Modules
 
 Modules are implementation of interfaces, and so they are how we actually define how the sequential circuit works. Modules have three components:
+
     * Internal state (registers)
     * Methods (inputs and outputs)
     * Rules (internal logic)
@@ -898,7 +899,7 @@ x <= 1; // write 1 to x
 y <= x; // read x into y
 ``` 
 
-NOTE: In this second example, the value of `x` will not appear in `y` until the end of the cycle! So if we were to read `y` on the next line, it would still return the old value.
+Note: In this second example, the old value of `x` will not appear in `y` until the end of the cycle, since this operation is a write to the register `y`! So if we were to read from `y` on the next line, it would still return the old value of `y`.
 
 ##### Vectors
 
@@ -927,38 +928,147 @@ import Vector :: * ;
 
 #### Methods and Rules
 
-Methods and bodies are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside worlds gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
+Methods and rules are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside world gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
 
-Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state. Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires).
-
+Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires). Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state. 
 
 guards, implicit and explicit
-atomicity
 no double-reads or double-writes
 
 ##### Methods
 
-called by outside world
+Methods are written as follows:
+
+```bluespec
+method MethodType methodName(ArgType1 arg1, ... ) if (guard);
+    statement1;
+    statement2;
+    ...
+    statementN;
+endmethod
+```
+
+A method can only be executed if `guard=True`. This is an explicit guard, and usually depends on the internal state of the module. If the method is executed, then statement1 through statementN will all be executed. Otherwise, none of them will be executed.
+
+If these statements include calls to internal modules, then they can also generate implicit guards. Take the following example. The `start` method in mkTwoModules only has one guard, `!busy`. However, since `mod1.start` and `mod2.start` also have guards, and can only execute when their guards are true, `mkTwoModules.start` can only execute if `mod1.busy=False` and `mod2.busy=False`. Since mkTwoModules doesn't have any visibility into the internal implementation of mkMyModule, we can't write them explicitly in mkTwoModules; they're instead implicit and get generated later by the compiler.
+
+```bluespec
+// Module that does something
+module mkMyModule(IfcType);
+    // Some internal state
+    ...
+    Reg#(Bool) busy <- mkReg(False);
+
+    method Action start() if (!busy);
+        doStuff();
+        ...
+    endmethod
+
+    ...
+
+endmodule
+
+// Module that instantiates two MyModules
+module mkTwoModules(IfcType);
+    MyModule mod1 <- mkMyModule;
+    MyModule mod2 <- mkMyModule;
+    Reg#(Bool) busy <- mkReg(False);
+
+    ...
+
+    method Action start() if (!busy);
+        mod1.start();
+        mod2.start();
+        ...
+    endmethod
+
+    ...
+
+endmodule
+```
 
 ##### Rules
 
-happens whenever it can
+Rules are similar to methods in that they are a collection of method calls, function calls, and use of temporary variables. However, they do not take inputs or generate outputs, and they do not interact with the outside world. Instead, they defined how the sequential circuit is continuously updating its internal state. While methods only execute when they are called, rules execute all the time when they can.
 
-#### Rule scheduling
+A rule is implemented as follows:
 
+```bluespec
+rule ruleName if (guard); // The word `if` is optional for rules
+    statement1;
+    statement2;
+    ...
+    statementN;
+endrule
+```
 
-## Program Structure
+Just like methods, a rule has implicit guards. If any statement is a method call with guards, then any guards on that method call are an implicit guard on this rule. If any implicit or explicit guard is false, then no statements will execute, otherwise all statements will execute.
+
+##### Avoiding Double Writes
+
+Since everything in a rule or method happens on the same cycle, we have to make sure that we don't try to double write to a register. Examples of double writes are:
+
+```bluespec
+// BAD: Double write
+method Action doubleWrite;
+    x <= 1;
+    x <= 0;
+endmethod
+
+// BAD: Conditional double write
+method Action condDoubleWrite;
+    x <= 1;
+    if (y) x <= 0;
+endmethod
+
+// OK: Two exclusive writes
+method Action condExclusiveWrite;
+    if (y) x <= 1;
+    else x <= 0;
+endmethod;
+```
+
+We also can't call conflicting methods in the same cycle. This includes double calling to the same method, or calling two methods that both write to the same register. For example:
+
+```bluespec
+module mkSubmodule;
+    // Internal state
+    ...
+    Reg#(Bit#(1)) x <- mkRegU;
+
+    method Action writeValueA;
+        x <= valA;
+    endmethod
+
+    method Action writeValueB;
+        x <= valB;
+    endmethod
+endmodule
+
+module mkMyModule;
+    // Internal state
+    ...
+    Submodule submod <- mkSubmodule;
+
+    // BAD: If this method executes, it would cause a double write
+    // to the register submod.x
+    method Action doSomething;
+        submod.writeValueA();
+        submod.writeValueB();
+    endmethod
+endmodule
+```
 
 ## Additional Topics (coming soon)
 
-#### Rule conflicts
+#### Program Structure (scoping, visibility, file structure, etc.)
+#### Rule conflicts and scheduling
 #### Testbenches
-#### Debugging
-#### Common Error Messages
-#### Display statements
+#### Synthesis / synthesize keyword
+#### Debugging / Common Error Messages
+#### Display statements and other system tasks/functions
 #### Provisos
 #### Recursion
 #### Don't care values
 #### Maybe values
 #### Case matches
-#### Synthesize
