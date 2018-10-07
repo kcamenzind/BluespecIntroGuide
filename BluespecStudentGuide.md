@@ -294,7 +294,7 @@ Bit#(2) y = pack(yellow); // y = 2'b11, the binary representation of Yellow
 
 ##### Indexing Bits
 
-Bits are stored as a string of bits, indexed from the MSB to LSB. For example, if you have a `Bit#(4) x = 4'b1010`, then x[0] = 0 (the LSB), and x[4] = 1 (the MSB). For a `Bit#(n)`, we can index it from 0 to n-1.
+Bits are stored as a string of bits, indexed from the MSB to LSB. For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB), and `x[4] = 1` (the MSB). For a `Bit#(n)`, we can index it from 0 to n-1.
 
 To access a parameterized Bit, we can use the numeric type -> Integer conversion discussed above. For example:
 
