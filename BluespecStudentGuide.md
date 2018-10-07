@@ -401,13 +401,13 @@ There are several built-in operators for built-in Bluespec types.
 
 Bitwise operators operate bit-by-bit on numbers. If the operator takes two arguments, so `a = b OP c`, then this is equivalent to writing `a[i] = b[i] OP c[i]` for every i from 0 to n-1. (Notice that a, b, and c must all be the same size.)
 
-&: bitwise-AND
+`&`: bitwise-AND
 
-|: bitwise-OR
+`|`: bitwise-OR
 
-^: bitwise-XOR
+`^`: bitwise-XOR
 
-~: bitwise-NOT
+`~`: bitwise-NOT
 
 ```bluespec
 Bit#(4) a = 4'b0011;
@@ -422,11 +422,11 @@ Bit#(4) f = ~a;    // f = 4'b1100;
 
 Each of these bitwise-operators has a logical equivalent. Logical operators perform the same operations as the bitwise operators, but instead of performing them bit-by-bit, it evaluates the entire variables as 0 if all the bits are 0, and 1 otherwise.
 
-&&: logical AND
+`&&`: logical AND
 
-||: logical OR
+`||`: logical OR
 
-! : logical NOT
+`!`: logical NOT
 
 ```bluespec
 Bit#(4) a = 4'b0101;
