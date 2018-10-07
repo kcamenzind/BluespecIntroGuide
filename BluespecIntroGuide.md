@@ -315,7 +315,7 @@ Bit#(3) lower_bits = x[2:0]; // lower_bits = 3'b010;
 Bit#(3) upper_bits = x[3:1]; // upper_bits = 3'b101;
 ```
 
-Note that with bit indexing, it's generally recommended to use constants as the indices. There are cases (particularly in for loops) where it's ok to extract bits with a variable, and other cases where's it's allowed but requires a large amount of hardware. Variable-sized bit slicing is illegal, since this would require a variable-sized variable.
+Note that with bit indexing, it's generally recommended to use constants as the indices (or Integers, since they're elaborated to constants at compile-time). It's generally ok to extract bits with a variable, but requires more hardware.
 
 Some examples:
 
@@ -340,7 +340,7 @@ When indexing with dynamic values, there's also always the danger of the indexin
 
 *Additional Note on Bit slicing*
 
-While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable widths.
+While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable widths. If there is a size mismatch, the compiler will truncate the left-most bits, or pad on the left with 0's.
 
 ##### Concatenating Bits
 
