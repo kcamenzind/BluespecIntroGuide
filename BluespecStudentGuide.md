@@ -22,8 +22,8 @@
   * [Variables](#variables)
     + [Variable declaration](#variable-declaration)
     + [Variable assignment](#variable-assignment)
-    + [let](#let)
-    + [Assignments are blocking](#assignments-are-blocking)
+    + [let keyword](#let-keyword)
+    + [Order of execution](#order-of-execution)
   * [Function structure](#function-structure)
     + [Function Declaration](#function-declaration)
     + [Parameterization](#parameterization)
@@ -539,7 +539,7 @@ if (cond) var2 = init1;
 y = f(var2); // var2 doesn't have a value if cond=False
 ```
 
-#### let
+#### let keyword
 
 It's good practice to explicitly declare your variable sizes. However, you can also allow the compiler to infer the type instead of writing it explicitly, by using the keyword `let` instead of declaring a variable type.
 
@@ -557,7 +557,7 @@ let f = 1;         // size of f can't be determined since 1 is unsized
 
 ```
 
-#### Assignments are blocking
+#### Order of execution
 
 One thing to note is that in these functions, statements execute like they would in many other programming languages: top to bottom. Re-assigning a variable another value will update its value for and only for future statements.
 
