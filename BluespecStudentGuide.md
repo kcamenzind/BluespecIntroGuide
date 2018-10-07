@@ -41,7 +41,9 @@
 
 ## Overview
 
-This document is a beginner's guide to Bluespec. It is intended for 6.004 students, so it is structured in the order that the class is taught. It will cover the basic language syntax, data types, and program structure. It is not a complete reference for the Bluespec language, and is therefore missing many features and may simplify others.
+This document is an introductory guide to learning Bluespec. It's intended for 6.004 students, and is structured mostly in the order that the class is taught. It will cover the basic language syntax, data types, and how to write combinational circuits (functions) and sequential circuits (modules).
+
+This isn't a complete (or official!) reference for the Bluespec language, so it's missing a lot of advanced topics and may have mistakes. If you do notice any mistakes or want to contribute content, feel free to open a pull request or issue, or just shoot me an email at kcamenzi@mit.edu.
 
 I've listed some other resoures to learn Bluespec below:
 
