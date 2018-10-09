@@ -744,10 +744,11 @@ endcase
 
 // This case conditionally sets to a value based on which value switch matches.
 let x = case (switch)
-    val1: xval1;    // x = xval1 if (switch==val1)
-    val2: xval2;    // x = xval2 if (switch==val2)
-    default: xval3; // x = xval3 if (switch!=val1) && (switch!=val2)
-endcase;            // Note the semicolon here
+    val1: xval1;           // x = xval1 if (switch==val1)
+    val2: xval2;           // x = xval2 if (switch==val2)
+    val3: (xval1 + xval2); // Need to wrap multi-term expressions in parentheses
+    default: xval3;        // x = xval3 if (switch!=val1) && (switch!=val2)
+endcase;                   // Note the semicolon here
 ```
 
 #### Return statements
@@ -797,8 +798,6 @@ function ReturnType myOtherFunc();
     else myFunc(val2);
 endfunction
 ```
-
-TODO: with the compiler is this actually true, can it not figure out that it can just mux the input? 
 
 ## Sequential Circuits
 
