@@ -401,15 +401,12 @@ There are several built-in operators for built-in Bluespec types.
 
 #### Bitwise operators
 
-Bitwise operators operate bit-by-bit on numbers. If the operator takes two arguments, so `a = b OP c`, then this is equivalent to writing `a[i] = b[i] OP c[i]` for every i from 0 to n-1. (Notice that a, b, and c must all be the same size.)
+Bitwise operators operate bit-by-bit on numbers, including `Bit#(n)`, `Int#(n)`, and `UInt#(n)`. If the operator takes two arguments, so `a = b OP c`, then this is equivalent to writing `a[i] = b[i] OP c[i]` for every i from 0 to n-1. (Notice that a, b, and c must all be the same size.)
 
-`&`: bitwise-AND
-
-`|`: bitwise-OR
-
-`^`: bitwise-XOR
-
-`~`: bitwise-NOT
+- `&`: bitwise-AND
+- `|`: bitwise-OR
+- `^`: bitwise-XOR
+- `~`: bitwise-NOT
 
 ```bluespec
 Bit#(4) a = 4'b0011;
@@ -420,25 +417,26 @@ Bit#(4) e = a ^ b; // e = 4'b0110;
 Bit#(4) f = ~a;    // f = 4'b1100;
 ```
 
+You cannot use bitwise operators on booleans; booleans have their own logical operators.
+
 #### Logical operators
 
-Each of these bitwise-operators has a logical equivalent. Logical operators perform the same operations as the bitwise operators, but instead of performing them bit-by-bit, it evaluates the entire variables as 0 if all the bits are 0, and 1 otherwise.
+The AND, OR, and NOT bitwise operators have logical equivalents. Logical operators perform the same operations as the bitwise operators, but they take two boolean arguments (`True` or `False`) and produce a boolean result.
 
-`&&`: logical AND
-
-`||`: logical OR
-
-`!`: logical NOT
+- `&&`: logical AND
+- `||`: logical OR
+- `!`: logical NOT
 
 ```bluespec
-Bit#(4) a = 4'b0101;
-Bit#(4) b = 4'b0000;
+Bool a = True;
+Bool b = False;
 
-Bit#(1) d = a || b; // c = 1 since a != 0
-Bit#(1) e = a && b; // c = 0 since b == 0
-Bit#(1) f = !a;     // f = 0 since a != 0
-Bit#(1) g = !b;     // g = 1 singe b == 0
+Bool d = a || b; // d = True since a == True
+Bool e = a && b; // e = False since b == False
+Bool f = !a;     // f = False since a != False
 ```
+
+There is no separate logical XOR operator, but the not-equals operator `!=` has the exact behavior of logical XOR.
 
 #### Ternary operator
 
