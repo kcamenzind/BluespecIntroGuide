@@ -193,19 +193,39 @@ Bool     // True or False (1 bit)
 Integer  // unsized number, only used in static elaboration
 ```
 
+##### Tuples
+
+Tuples are built-in types that are made up of other types that you specify. For example, `Tuple2#(Bit#(1), Bit#(2))` is the type of a 2-tuple that contains a `Bit#(1)` and a `Bit#(2)`.
+
+Tuples can be constructed with the special functions `tuple2`, `tuple3`, and so on:
+
+```bluespec
+Tuple2#(Bit#(1), Bit#(2)) pair = tuple2(1, 0);
+```
+
+To access individual elements of tuples, you can use the special functions `tpl_1`, `tpl_2`, and so on. For example `tpl_1(pair)` gets the first element from the tuple we constructed above, which would be 1. You can also use pattern-matching to get all values frmo a tuple at once:
+
+```bluespec
+match {.a, .b} = pair;
+```
+
+##### Other Types
+
 There are some built-in types that will be explained in the sequential section.
 
 #### User-defined types
 
 ##### Type synonyms
 
-You can rename types with the following syntax:
+You can give types new names with the following syntax:
 
-`typedef OldType NewType`
+`typedef OldType NewType;`
 
 For example, you may want to rename Bit#(8) as Byte.
 
-`typedef Bit#(8) Byte`
+`typedef Bit#(8) Byte;`
+
+After this, you can write `Byte` instead of `Bit#(8)`. (You can also keep using the old `Bit#(8)` name.)
 
 ##### Structs
 
@@ -232,6 +252,13 @@ OldType2 m2_copy = myNewVar.m2;
 
 // Set a field
 myNewVar.m1 = 2'b11;
+```
+
+Similar to tuples, you can also get all fields from a struct with pattern matching as follows:
+
+```
+match tagged NewType {m1: .myM1, m2: .myM2} = myNewVar;
+// you can use variables myM1 and myM2 here
 ```
 
 ##### Enums
@@ -588,7 +615,7 @@ function ReturnType functionName(ArgType1 argName1, ArgType2 argnName2, ... , Ar
 endfunction
 ```
 
-A function can return exactly 1 value. If you want to return multiple values, then you can pack them into a user-defined type and extract the separate values from the fields of the return value.
+A function can return exactly 1 value. If you want to return multiple values, then you can pack them into a [tuple](#tuples) or a user-defined [struct](#structs) and extract the separate values from the values or fields of the return value.
 
 `function` and `endfunction` are Bluespec keywords that define the beginning and end of the function declaration.
 
