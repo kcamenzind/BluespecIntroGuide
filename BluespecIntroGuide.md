@@ -203,7 +203,7 @@ Tuples can be constructed with the special functions `tuple2`, `tuple3`, and so 
 Tuple2#(Bit#(1), Bit#(2)) pair = tuple2(1, 0);
 ```
 
-To access individual elements of tuples, you can use the special functions `tpl_1`, `tpl_2`, and so on. For example `tpl_1(pair)` gets the first element from the tuple we constructed above, which would be 1. You can also use pattern-matching to get all values frmo a tuple at once:
+To access individual elements of tuples, you can use the special functions `tpl_1`, `tpl_2`, and so on. For example `tpl_1(pair)` gets the first element from the tuple we constructed above, which would be 1. You can also use pattern-matching to get all values from a tuple at once:
 
 ```bluespec
 match {.a, .b} = pair;
