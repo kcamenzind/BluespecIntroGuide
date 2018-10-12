@@ -780,7 +780,7 @@ endcase;                   // Note the semicolon here
 
 #### Return statements
 
-You can have return statements anywhere in your function. However, note that you must have a return statement, so there cannot be a possible path where your function will not return a value.
+Return statements specify the return value of your function. You can only have return statements at the very end of your function (there can't be any statements after them, not even other return statements), although they can be at the end of branches in an if-else conditional. In addition, you must have a return statement at the end of every path of execution, so there cannot be a possible path where your function will not return a value.
 
 ```bluespec
 // Best to put your return value at the end.
@@ -797,7 +797,8 @@ function ReturnType fnName(args...);
     else return val2;
 endfunction
 
-// Also ok to have a default return statement
+// BAD: the return statements in the if/else come before the return statement at the very end
+// (This is easy to fix by just adding `else` before `return val3;`)
 function ReturnType fnName(args...);
     if (cond1) return val1;
     else if (cond2) return val2;
