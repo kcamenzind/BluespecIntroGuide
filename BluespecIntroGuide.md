@@ -1179,6 +1179,55 @@ endcase
 #### Testbenches
 #### Synthesis / synthesize keyword
 #### Debugging / Common Error Messages
+
+Most of Bluespec's error messages have line and column numbers, so it can often help you track down the error sooner if you enable line numbers on your text editor.
+
+##### Bluespec doesn't respond for a long time
+
+Check if you have Internet access inside the VM and that you're not on MIT GUEST, since Bluespec needs Internet access to check out a license and run.
+
+##### "Type error ... Expected type ... Inferred type ..."
+
+That means that Bluespec wanted some expression to be a particular ("expected") type, but the expression was a different ("inferred") type, so Bluespec couldn't compile the expression. Try to figure out why they are different and what you can do to both sides to make them the same. Common possible type errors:
+
+-   **The two types are `Bit#(n)` and `Bit#(m)` for different numbers `n` and `m`, or one of the types is `Bit#(n)` and the other is `Integer`**: Remember that most of Bluespec's bitwise and arithmetic operators only operate between two operands of the same number of bits, or between two `Integer`s. If you have two `Bit` types of different lengths, you may want to `extend`/`zeroExtend`/`signExtend`, `truncate`, or slice one or both of them so they match. If you have an `Integer` (in particular, the result of calling `valueOf` on a numeric type variable), you can call `fromInteger` on it to turn it into an arbitrary `Bit#(n)`.
+
+-   **One of the types is `Bool` and the other is some `Bit#(n)`**: Remember that `Bool`s and `Bit#(1)`s are different types, and that Bluespec's boolean and bitwise operators are different.
+
+    -   For `Bool`s, you use `&&` `||` and `!`.
+    -   For `Bit#(n)`, you use `&` `|` and `~`.
+
+    You can convert a `Bit#(1) b` to a `Bool` with `b == 1` and you can convert a `Bool b` to a `Bit#(1)` with `b ? 1 : 0`.
+
+##### "The numeric types ... could not be shown to be equal"
+
+This usually arises because you are using type variables in some way that only works if they are equal to some fixed type or to each other. For example, if you try to assign a value of type `Bit#(m)` to a variable of type `Bit#(2)` where `m` is an actual type variable, Bluespec will complain that it doesn't know if `m` equals `2`. You may be able to resolve this by extending or truncating.
+
+One particular reason you might encounter this error is if you're trying to write a recursive function with a base case depending on a type variable. For example, in order to reverse the bits in a sequence, you might try to write a recursive function like this:
+
+```bluespec
+function Bit#(w) myReverseBits(Bit#(w) bits);
+    if (valueOf(w) == 1)
+        return bits[0];
+    else begin
+        Bit#(TSub#(w, 1)) rest = bits[valueOf(w)-1:1];
+        return {bits[0], myReverseBits(rest)};
+    end
+endfunction
+```
+
+Unfortunately Bluespec doesn't work this way: when compiling it will not treat the condition `valueOf(w) == 1` specially, and it will still require both branches of the if/else to match the claimed return value. That is, even if `w > 1` and you know the top branch of the if/else will not be taken, Bluespec will still require that the return value from the top branch (which is `Bit#(1)`) match the return type (which is `Bit#(w)`) of the function, and it will complain that it can't show that `w` equals `1`. You should probably just try to write functions like this iteratively. (For this particular use case, Bluespec has a built-in `reverseBits` function that returns a reversed copy of the bits of a `Bit#(n)`.)
+
+##### "The provisos for this expression are too general"
+
+This error means you are using type variables in some more complicated way that Bluespec doesn't have enough information to see will work, most commonly numeric type variables. A "proviso" is some kind of constraint on the type variables that has to be satisfied in order for your code to make sense. For example, if you try to assign a value of type `Bit#(TAdd#(m, 1))` to a variable of type `Bit#(n)` where `m` and `n` are actual different type variables, this is only possible if `m + 1` equals `n`, and Bluespec will complain that it wants a proviso that translates to `m + 1 == n`.
+
+Some example errors:
+
+-   **"`The following provisos are needed: Add#(w, 1, w)`"**: The proviso `Add#(w, 1, w)` mwans that Bluespec wants `w + 1 = w` to be true. Obviously, this is mathematically impossible, but unfortunately Bluespec is not smart enough to figure this out. It typically means you are trying to assign a value of type `Bit#(TAdd#(w, 1))` to a variable of type `Bit#(w)` or vice versa. The way around is usually the same as when you have a type error between `Bit#(m)` and `Bit#(n)` for actual numbers `m` and `n`; you should try to extend or truncate.
+
+-   **"`The following provisos are needed: Add#(a__, 1, w)`"**: If there's a variable that ends in two underscores, it's usually a made-up name internal to Bluespec. In this case this proviso just means that Bluespec thinks `w` has to be greater than or equal to 1. In this case you may actually want to add this proviso to your function; see the section below on provisos (TODO).
+
 #### Display statements and other system tasks/functions
 #### Provisos
 #### Recursion
