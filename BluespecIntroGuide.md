@@ -55,6 +55,8 @@ I've listed some other resoures to learn Bluespec below:
 * [Bluespec Reference Card](http://www.bluespec.com/forum/download.php?id=98): A short document (3 pages) good for looking up syntax.
 * [Online tutorial](http://wiki.bluespec.com/Home): An online walk-through of some of the common features of Bluespec, along with examples.
 
+If you just want to briefly review Bluespec syntax or quickly look up a particular piece of syntax, you may want to consult the [Quick Reference](BluespecQuickReference.md).
+
 ## Bluespec Syntax
 
 ### Capitalization
