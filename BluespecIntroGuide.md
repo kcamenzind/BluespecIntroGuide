@@ -1145,5 +1145,35 @@ endmodule
 #### Provisos
 #### Recursion
 #### Don't care values
+
 #### Maybe values
+
+Given a type `Type`, you can create a type called `Maybe#(Type)`. Values of the type `Maybe#(Type)` could either be `Valid` and contain a value of type `Type`, or be `Invalid` (and not contain anything --- there's exactly one possible `Invalid` value). The syntax for a valid `Maybe` value is `tagged Valid value` and the syntax for the invalid `Maybe` value is `tagged Invalid`. For example, here are all possible values of the type `Maybe#(Bit#(2))`:
+
+```bluespec
+Maybe#(Bit#(2)) invalid = tagged Invalid;
+Maybe#(Bit#(2)) valid00 = tagged Valid 2'b00;
+Maybe#(Bit#(2)) valid01 = tagged Valid 2'b01;
+Maybe#(Bit#(2)) valid10 = tagged Valid 2'b10;
+Maybe#(Bit#(2)) valid11 = tagged Valid 2'b11;
+```
+
+To use a `Maybe` value, you might want to use the built-in functions `fromMaybe` and `isValid`.
+
+-   If `defaultVal` is a value of some type `Type` and `maybeVal` is a value of type `Maybe#(Type)`, then `fromMaybe(defaultVal, maybeVal)` returns the value inside `maybeVal` if `maybeVal` is Valid, and `defaultVal` if `maybeVal` is invalid.
+-   `isValid(maybeVal)` returns `True` if `maybeVal` is Valid and `False` if `maybeVal` is Invalid.
+
+However, the most generally useful way of handling a `Maybe` value is to use a case matching statement or expression.
+
 #### Case matches
+
+```bluespec
+Maybe#(Bit#(2)) foo = // ...
+
+case (foo) matches
+    tagged Valid .x:
+        // foo is Valid and x is the value of type Bit#(2) inside foo
+    tagged Invalid:
+        // foo is Invalid
+endcase
+```
