@@ -38,6 +38,10 @@
     + [Module Declaration](#module-declaration)
     + [Internal State](#internal-state)
     + [Methods and Rules](#methods-and-rules)
+- [Additional Topics](#additional-topics)
+  * [Maybe values](#maybe-values)
+  * [Case matches](#case-matches)
+
 
 ## Overview
 
@@ -1134,17 +1138,7 @@ module mkMyModule;
 endmodule
 ```
 
-## Additional/Advanced Topics (TODO)
-
-#### Program Structure (scoping, visibility, file structure, etc.)
-#### Rule conflicts and scheduling
-#### Testbenches
-#### Synthesis / synthesize keyword
-#### Debugging / Common Error Messages
-#### Display statements and other system tasks/functions
-#### Provisos
-#### Recursion
-#### Don't care values
+## Additional Topics
 
 #### Maybe values
 
@@ -1177,3 +1171,16 @@ case (foo) matches
         // foo is Invalid
 endcase
 ```
+
+## TODO
+
+#### Program Structure (scoping, visibility, file structure, etc.)
+#### Rule conflicts and scheduling
+#### Testbenches
+#### Synthesis / synthesize keyword
+#### Debugging / Common Error Messages
+#### Display statements and other system tasks/functions
+#### Provisos
+#### Recursion
+#### Don't care values
+#### Tagged Unions
