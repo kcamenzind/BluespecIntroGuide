@@ -1010,6 +1010,40 @@ Note: To use Vectors, you have to import the Vector package by adding the follow
 import Vector :: * ;
 ```
 
+##### Other
+
+There are other, more complex modules that can be used to store internal state. A FIFO (first-in-first-out) queue stores some amount of data. A producer can enqueue (`enq`) data, putting it into the queue, and a consumer can dequeue (`deq`) data, taking it out of the queue; this can happen in the same cycle or in different cycles. The consumer always dequeues data in the same order that the producer produces it, hence first-in-first-out. FIFOs are useful for flexibly storing data between pipeline stages.
+
+```bluespec
+interface FIFO#(type a);
+    method Action  enq (a x);
+    method Action  deq;
+    method a       first; // data that was enqueued the earliest
+    method Action  clear;
+endinterface;
+```
+
+You must `import FIFO :: *;` to use FIFOs.
+
+```bluespec
+FIFO#(datatype) fifo <- mkFIFO;
+```
+
+To enqueue data you will usually write:
+
+```bluespec
+fifo.enq(data);
+```
+
+To dequeue data you will usually write:
+
+```bluespec
+let data = fifo.first;
+fifo.deq;
+```
+
+But you don't need to call both methods. You can choose to call just `fifo.first` to examine the data at the front of the queue, or just `fifo.deq;` to dequeue something and get rid of it.
+
 #### Methods and Rules
 
 Methods and rules are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside world gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
@@ -1138,6 +1172,27 @@ module mkMyModule;
         submod.writeValueB();
     endmethod
 endmodule
+```
+
+##### Scheduling
+
+**Scheduling** concerns how the Bluespec compiler determines which rules will fire in each cycle. Generally, in every cycle, Bluespec will try to fire every rule whose guard is True, in some order. If it can't do that, which could happen if two rules both interact with the same registers or conflicting methods of the same module, Bluespec will issue a warning. No matter what, each rule will execute at most once each cycle.
+
+Some constraints fom basic modules:
+
+-   For a normal register, all reads (including e.g. in the guards of rules) must be scheduled before all writes in each cycle.
+-   For a normal FIFO queue, only one rule can `enq` and only one rule can `deq` each cycle, but the two could happen in either order. `first` must happen before `deq`.
+
+If the `-show-schedule` flag is passed to Bluespec, which it should be in 6.004 makefiles, you can see the generated schedule of rules in the `.sched` file. There are also some *scheduling attributes* that you can write before rules to affect their scheduling. They are rather advanced but can be useful to make sure that methods are fired under the conditions you expect them to, and scheduled in the order you expect them to. Consult the Bluespec reference guide for more information.
+
+```bluespec
+(* fire_when_enabled *) // the immediately following rule *must* fire if its guard is enabled. If the compiler can't make this happen, it errors.
+(* no_implicit_conditions *) // The immediately following rule must not have any implicit guards, caused by calling a method with a guard. That is, it must be able to fire if its guard is enabled.
+(* descending_urgency = "rule1, rule2, rule3" *) // rule1 is more urgent than rule2, which is more urgent than rule3, etc.; which means that if the guard of multiple of these rules is enabled and they conflict, the earlier (more urgent) rules will fire
+(* execution_order = "rule1, rule2, rule3" *) // in each cycle, rule1 should be scheduled before rule2, which should be scheduled before rule3. If this can't happen, the compiler will consider them to conflict, even if they could have executed in the other order without this attribute.
+(* mutually_exclusive = "rule1, rule2, rule3" *) // Tells the compiler that these rules' guards are mutually exclusive, even if Bluespec can't determine it. Bluespec will insert code so that there will be an error if this fails during runtime simulation.
+(* conflict_free = "rule1, rule2, rule3" *) // Tells the compiler that these rules are conflict-free, i.e. they will never call conflicting methods when running, even if Bluespec can't determine it. Bluespec will insert code so that there will be an error if this fails during runtime simulation.
+(* preempts = "rule1, rule2" *) // Tells the compiler that if rule1 fires, rule2 must not fire; equivalent to forcing the two rules to conflict and then annotating with descending_urgency.
 ```
 
 ## Additional Topics
