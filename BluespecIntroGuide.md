@@ -183,7 +183,7 @@ When we write programs, we often have to assign hard-coded numeric values to var
 
 ```
 
-We need to be careful when using '0 or '1 or the compiler will be unhappy. Only use these when both the size of the variable is defined, and the size of the space we're filling with 0's or 1's is unambiguous.
+We need to be careful when using `'0` or `'1` or the compiler will be unhappy. Only use these when both the size of the variable is defined, and the size of the space we're filling with 0's or 1's is unambiguous.
 
 #### Predefined Types
 
@@ -225,11 +225,15 @@ There are some built-in types that will be explained in the sequential section.
 
 You can give types new names with the following syntax:
 
-`typedef OldType NewType;`
+```bluespec
+typedef OldType NewType;
+```
 
-For example, you may want to rename Bit#(8) as Byte.
+For example, you may want to rename `Bit#(8)` as `Byte`.
 
-`typedef Bit#(8) Byte;`
+```bluespec
+typedef Bit#(8) Byte;
+```
 
 After this, you can write `Byte` instead of `Bit#(8)`. (You can also keep using the old `Bit#(8)` name.)
 
@@ -262,7 +266,7 @@ myNewVar.m1 = 2'b11;
 
 Similar to tuples, you can also get all fields from a struct with pattern matching as follows:
 
-```
+```bluespec
 match tagged NewType {m1: .myM1, m2: .myM2} = myNewVar;
 // you can use variables myM1 and myM2 here
 ```
@@ -281,19 +285,19 @@ Deriving Bits means that the values Red, Green, Yellow and Blue will be automati
 
 ##### Converting between numeric types, Integers, and Bits
 
-To extract the Integer value of a numeric type, use `Integer i = valueOf(n)`, where n is the numeric type.
+To extract the Integer value of a numeric type, use `Integer i = valueOf(n)`, where `n` is the numeric type.
 
-To extract convert an Integer to a Bit#(n) value, use `Bit#(n) x = fromInteger(i)`, where i is an Integer.
+To extract convert an Integer to a `Bit#(n)` value, use `Bit#(n) x = fromInteger(i)`, where `i` is an `Integer`.
 
-You can chain these together to store the value of a numeric type into a Bit#(n) as follows:
+You can chain these together to store the value of a numeric type into a `Bit#(n)` as follows:
 
 ```bluespec
 Bit#(m) x = fromInteger(valueOf(n));
 ```
 
-(Note: n and m could be the same value, they're just different numeric type names to illustrate that they don't have to be the same value.)
+(Note: `n` and `m` could be the same value, they're just different numeric type names to illustrate that they don't have to be the same value.)
 
-Lastly, you can extract the size of a Type (in bits) by using SizeOf. SizeOf returns a numeric type, which then you can then further convert into an Integer or Bit# depending on your use case. For example:
+Lastly, you can extract the size of a Type (in bits) by using `SizeOf`. `SizeOf` returns a numeric type, which then you can then further convert into an Integer or `Bit#` depending on your use case. For example:
 
 ```bluespec
 Bit#(3) x = 0; // Size of x is 3 bits
@@ -302,9 +306,9 @@ Integer i = valueOf(SizeOf(x)); // i = 3, converted from numeric type -> Integer
 
 ##### Converting between Bits and other types
 
-If a type is represented by Bits, then we can convert between these types and their bit representations. Examples of this are Int, UInt, and any user-defined type deriving Bits.
+If a type is represented by `Bits`, then we can convert between these types and their bit representations. Examples of this are `Int`, `UInt`, and any user-defined type deriving `Bits`.
 
-To convert from Bit to any other type, use unpack:
+To convert from `Bit` to any other type, use `unpack`:
 
 ```bluespec
 Bit#(3) x = 3'b101;     // x is the binary value 101
@@ -312,7 +316,7 @@ UInt#(3) y = unpack(x); // y = 5, the UInt represented by the bits 101
 Int#(3) z = unpack(x);  // z = -3, the Int represented by the bits 101
 ```
 
-To convert from any type to Bit, use pack:
+To convert from any type to `Bit`, use `pack`:
 
 ```bluespec
 typedef enum Color { Red, Green, Blue, Yellow } deriving (Bits, Eq);
@@ -329,16 +333,16 @@ Bit#(2) y = pack(yellow); // y = 2'b11, the binary representation of Yellow
 
 ##### Indexing Bits
 
-Bits are stored as a string of bits, indexed from the MSB to LSB. For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB), and `x[4] = 1` (the MSB). For a `Bit#(n)`, we can index it from 0 to n-1.
+`Bit#`s are stored as a string of bits, indexed from the MSB to LSB. For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB), and `x[4] = 1` (the MSB). For a `Bit#(n)`, we can index it from 0 to n-1.
 
-To access a parameterized Bit, we can use the numeric type -> Integer conversion discussed above. For example:
+To access a parameterized Bit, we can use the numeric type -> `Integer` conversion discussed above. For example:
 
 ```bluespec
 Bit#(n) x_param = 1; // x = 1, has n-1 leading zeros
 Bit#(1) x_msb = x_param[valueOf(n)-1]; // x_msb is the top bit of x_param
 ```
 
-We can also take slices of Bits. For example:
+We can also take slices of `Bit#`s. For example:
 
 ```bluespec
 Bit#(4) x = 4'b1010;
@@ -348,7 +352,7 @@ Bit#(3) lower_bits = x[2:0]; // lower_bits = 3'b010;
 Bit#(3) upper_bits = x[3:1]; // upper_bits = 3'b101;
 ```
 
-Note that with bit indexing, it's generally recommended to use constants as the indices (or Integers, since they're elaborated to constants at compile-time). It's generally ok to extract bits with a variable, but requires more hardware.
+Note that with bit indexing, it's generally recommended to use constants as the indices (or `Integer`s, since they're elaborated to constants at compile-time). It's generally ok to extract bits with a variable, but requires more hardware.
 
 Some examples:
 
@@ -367,9 +371,9 @@ Bit#(2) d = x[i:i-1];                 // OK, fixed-size and fixed-value slice
 Bit#(2) e = x[dynamic_i:dynamic_i-1]; // OK but inefficient, fixed-size but non-fixed-value slice
 Bit#(2) f = x[fixed_i:0];             // ONLY OK if i=1 to guarantee sizes match
 Bit#(2) g = x[dynamic_i:0];           // BAD, no guarantee that sizes will match
-``` 
+```
 
-When indexing with dynamic values, there's also always the danger of the indexing out of range. For example, if you have a Bit#(3), you have to index with at least 2 bits to cover values 2'b00, 2'b01, and 2'b10. However, if the index takes the value 2'b11, then this is out of the range of the bit string.
+When indexing with dynamic values, there's also always the danger of the indexing out of range. For example, if you have a `Bit#(3)`, you have to index with at least 2 bits to cover values `2'b00`, `2'b01`, and `2'b10`. However, if the index takes the value `2'b11`, then this is out of the range of the bit string.
 
 *Additional Note on Bit slicing*
 
@@ -377,7 +381,7 @@ While it's legal to use operators in the expressions for indexing (for example, 
 
 ##### Concatenating Bits
 
-We can combine strings of bits into longer strings of bits. To concatenate two Bits, use the following notation:
+We can combine strings of bits into longer strings of bits. To concatenate two Bits, use curly braces `{ }`, as in the following notation:
 
 ```bluespec
 Bit#(2) a = 2'b11;
@@ -395,7 +399,7 @@ Bit#(5) e = { 1'b0, x, 2'b00 }; // e = 5'b01100;
 
 ##### Extending Bits
 
-Sometimes it can be useful to add arbitrary numbers of 0's or 1's to the beginning or end (usually beginning) of Bits to change the size but retain the numeric value. The first way that we can do this is by concatenating our original number with '1 or '0, which represent "as many 0's or 1's as needed to fill the specified width".
+Sometimes it can be useful to add arbitrary numbers of 0's or 1's to the beginning or end (usually beginning) of Bits to change the size but retain the numeric value. The first way that we can do this is by concatenating our original number with `'1` or `'0`, which represent "as many 0's or 1's as needed to fill the specified width".
 
 For example:
 
@@ -473,7 +477,7 @@ There is no separate logical XOR operator, but the not-equals operator `!=` has 
 
 #### Ternary operator
 
-The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if `cond==True`, and val2 if `cond==False`. The cond must evaluate to the Boolean (not Bit#(1)) type.
+The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if `cond==True`, and val2 if `cond==False`. The cond must evaluate to the `Bool` (**not `Bit#(1)`**) type.
 
 Example:
 ```bluespec
@@ -559,7 +563,7 @@ This also means that the scope of a declared variable is only within the functio
 
 #### Variable assignment
 
-Variables must be assigned values to be used. Generally, you will include an initial value in its declaration. If you don't, then you should always make sure taht the variable is assigned a value before it's used.
+Variables must be assigned values to be used. Generally, you will include an initial value in its declaration. If you don't, then you should always make sure that the variable is assigned a value before it's used.
 
 ```bluespec
 TypeName variableName = initialValue; // Initializes variableName to initialValue
@@ -645,7 +649,7 @@ function Bit#(TAdd#(n,1)) addN(Bit#(n) a, Bit#(n) b, Bit#(1) c);
 endfunction
 ```
 
-This says that inputs `a` and `b` will be Bits of size n, c is a Bit of size 1, and the function will return a Bit of size n+1. (If you don't remember how the TAdd# function works, refer to the section on numeric type operations.) 
+This says that inputs `a` and `b` will be Bits of size n, c is a Bit of size 1, and the function will return a Bit of size n+1. (If you don't remember how the `TAdd#` function works, refer to the section on [numeric type operators](#numeric-type-operators).)
 
 You can then actually call your function by just passing in arguments of compatible bit widths. This can be done in several ways, as shown below.
 
@@ -707,7 +711,7 @@ for (Integer i = 0; i < valueOf(n); i = i + 1) begin
 end
 ```
 
-One thing to note is that loops are unrolled at compile-time. This means that what the second for-loop above actually does is the following:
+One thing to note is that loops are *unrolled at compile-time*. This means that what the second for-loop above actually does is the following:
 
 ```bluespec
 i = 0;              // i = 0
@@ -722,9 +726,9 @@ i = i + 1;          // i = 4
 count = count + i;
 ```
 
-Another thing to note is the use of the Integer type in the for loop. We use Integers because they're unsized so we don't have to worry about if we're using enough bits. At the same time, since the loop is unrolled, it's ok to use an Integer because i won't ever actually change values in the compiled circuit, it just becomes a hard-coded constant for each iteration of the loop.
+Another thing to note is the use of the `Integer` type in the for loop. We use `Integer`s because they're unsized so we don't have to worry about if we're using enough bits. At the same time, since the loop is unrolled, it's ok to use an Integer because `i` won't ever actually change values in the compiled circuit, it just becomes a hard-coded constant for each iteration of the loop.
 
-We generally want to keep the bounds of our for loop to a constant, because otherwise our circuit has to unroll every possible iteration of the for loop and put a mux on every iteration deciding whether that iteration is the final one or not. In code:
+We generally want to keep the bounds of our `for` loop to a constant, because otherwise our circuit has to unroll every possible iteration of the for loop and put a mux on every iteration deciding whether that iteration is the final one or not. In code:
 
 ```bluespec
 Bit#(5) max = get_max(); // value of max is unknown at compile time
@@ -757,7 +761,7 @@ else if (cond2) doSomethingElse;
 
 ##### Case
 
-The case statement is a shorthand way of writing long if/else blocks. The syntax is as follows:
+The `case` statement is a shorthand way of writing long `if`/`else` blocks. The syntax is as follows:
 
 ```bluespec
 Type switch = some_val;
@@ -784,7 +788,7 @@ endcase;                   // Note the semicolon here
 
 #### Return statements
 
-Return statements specify the return value of your function. You can only have return statements at the very end of your function (there can't be any statements after them, not even other return statements), although they can be at the end of branches in an if-else conditional. In addition, you must have a return statement at the end of every path of execution, so there cannot be a possible path where your function will not return a value.
+`return` statements specify the return value of your function. You can only have return statements at the very end of your function (there can't be any statements after them, not even other return statements), although they can be at the end of branches in an if-else conditional. In addition, you must have a return statement at the end of every path of execution, so there cannot be a possible path where your function will not return a value.
 
 ```bluespec
 // Best to put your return value at the end.
@@ -833,7 +837,7 @@ endfunction
 
 ## Sequential Circuits
 
-Up to this point, we've only talked about writing code to generate circuits that have no concept of time or state. We'll now take a look at how we can use Bluespec to describe sequential circuits, which are cycle-driven (by an implicit clock--we're going to skip in this guide talking about designs that use multiple clocks) and can store state across cycles.
+Up to this point, we've only talked about writing code to generate circuits that have no concept of time or state. We'll now take a look at how we can use Bluespec to describe sequential circuits, which are cycle-driven (by an implicit clock—we're going to skip in this guide talking about designs that use multiple clocks) and can store state across cycles.
 
 ### Interfaces
 
@@ -897,9 +901,9 @@ An interface with no methods is built into Bluespec, and is called `Empty`. This
 
 Modules are implementation of interfaces, and so they are how we actually define how the sequential circuit works. Modules have three components:
 
-    * Internal state (registers)
-    * Methods (inputs and outputs)
-    * Rules (internal logic)
+* Internal state (registers)
+* Methods (inputs and outputs)
+* Rules (internal logic)
 
 Again, we're going to only talk about sequential circuits that use one clock domain, so the clock is implicit and we can think of modules on a timestep basis. What this means is that on every clock cycle (or timestep), the internal state and inputs are read, and then some actions are conditionally executed, and the some new values are conditionally written back to the internal state. Then, on the next timestep, the same thing repeats, using the new state and new inputs.
 
@@ -959,8 +963,8 @@ The most basic module in Bluespec is the register: `Reg#(Type)`. A register can 
 
 A register has only two methods: `_read` and `_write`. Since it's such a commonly used module, however, there's a shorthand for these two methods. If we have a 2-bit register `x`:
 
-`let y = x;` is equivalent to `let y = x._read();`
-`x <= 2'b00;` is equivalent to `x._write(2'b00);`
+- `let y = x;` is equivalent to `let y = x._read();`
+- `x <= 2'b00;` is equivalent to `x._write(2'b00);`
 
 When you read from a register, it returns the value of the data stored in the register. When you write data to a register, the new data value does not appear until the next cycle. So if a 1-bit register `x` is currently `0`, and in some rule/method (explained later) we have:
 
@@ -981,18 +985,18 @@ and the end value of `y` will be 0, not 1, because writes to `x` don't happen un
 ```bluespec
 x <= 1; // write 1 to x
 y <= x; // read x into y
-``` 
+```
 
-Note: In this second example, the old value of `x` will not appear in `y` until the end of the cycle, since this operation is a write to the register `y`! So if we were to read from `y` on the next line, it would still return the old value of `y`.
+Note: In this second example, **the old value of `x` will not appear in `y` until the end of the cycle**, since this operation is a write to the register `y`! So if we were to read from `y` on the next line, it would still return the old value of `y`.
 
 ##### Vectors
 
-Sometimes we want to declare an array of registers of the same size. For example, if we have a buffer of length n, we need an array of n registers to store our data. Bluespec has another built-in type, Vector, that we can use for this purpose, that has the following declaration:
+Sometimes we want to declare an array of registers of the same size. For example, if we have a buffer of length n, we need an array of n registers to store our data. Bluespec has another built-in type, `Vector`, that we can use for this purpose, that has the following declaration:
 
 ```bluespec
 Vector#(n, ElementType);
 ```
-where n is the number of elements in the array, and ElementType is the type of elements in the array.
+where `n` is the number of elements in the array, and `ElementType` is the type of elements in the array.
 
 If we want to actually instantiate a Vector of Registers, we would do so as follows:
 
@@ -1104,7 +1108,7 @@ endmodule
 
 ##### Rules
 
-Rules are similar to methods in that they are a collection of method calls, function calls, and use of temporary variables. However, they do not take inputs or generate outputs, and they do not interact with the outside world. Instead, they defined how the sequential circuit is continuously updating its internal state. While methods only execute when they are called, rules execute all the time when they can.
+Rules are similar to methods in that they are a collection of method calls, function calls, and use of temporary variables. However, they do not take inputs or generate outputs, and they do not interact with the outside world. Instead, they define how the sequential circuit is continuously updating its internal state. While methods only execute when they are called, rules execute all the time when they can.
 
 A rule is implemented as follows:
 
