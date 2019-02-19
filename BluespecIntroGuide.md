@@ -333,7 +333,7 @@ Bit#(2) y = pack(yellow); // y = 2'b11, the binary representation of Yellow
 
 ##### Indexing Bits
 
-`Bit#`s are stored as a string of bits, indexed from the MSB to LSB. For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB), and `x[4] = 1` (the MSB). For a `Bit#(n)`, we can index it from 0 to n-1.
+`Bit#`s are stored as a string of bits, indexed from the least significant bit (LSB) to the most significant bit (MSB). That is, more significant bits correspond to higher indices. Note that this is **backwards** from how you'd usually write binary literals, since the literals go from most significant bits to least significant bits! For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB or rightmost bit), and `x[3] = 1` (the MSB or leftmost bit). For a `Bit#(n)`, we can index it from `0` to `n-1`. When you index a `Bit#`, you get a `Bit#(1)`.
 
 To access a parameterized Bit, we can use the numeric type -> `Integer` conversion discussed above. For example:
 
@@ -342,14 +342,14 @@ Bit#(n) x_param = 1; // x = 1, has n-1 leading zeros
 Bit#(1) x_msb = x_param[valueOf(n)-1]; // x_msb is the top bit of x_param
 ```
 
-We can also take slices of `Bit#`s. For example:
+We can also take slices of `Bit#`s with the syntax `x[hi:lo]`. This means to get the bits from `hi` to `lo` **inclusive**, and the first index `hi` should be greater than or equal to the second index `lo`. The result will have type `Bit#(hi - lo + 1)` (if you do the math, you'll see that `hi - lo + 1` is just the number of bits sliced). For example:
 
 ```bluespec
 Bit#(4) x = 4'b1010;
-Bit#(4) y = x;      // y = 4'b1010 
+Bit#(4) y = x;      // y = 4'b1010
 Bit#(4) z = x[3:0]; // z = 4'b1010
-Bit#(3) lower_bits = x[2:0]; // lower_bits = 3'b010;
-Bit#(3) upper_bits = x[3:1]; // upper_bits = 3'b101;
+Bit#(3) lower_bits = x[2:0]; // lower_bits = { x[2], x[1], x[0] } = 3'b010;
+Bit#(3) upper_bits = x[3:1]; // upper_bits = { x[3], x[2], x[1] } = 3'b101;
 ```
 
 Note that with bit indexing, it's generally recommended to use constants as the indices (or `Integer`s, since they're elaborated to constants at compile-time). It's generally ok to extract bits with a variable, but requires more hardware.
@@ -377,11 +377,11 @@ When indexing with dynamic values, there's also always the danger of the indexin
 
 *Additional Note on Bit slicing*
 
-While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determined the size of the slice.) So be particularly careful that you match your slice width to the assigned variable widths. If there is a size mismatch, the compiler will truncate the left-most bits, or pad on the left with 0's.
+While it's legal to use operators in the expressions for indexing (for example, `x[i-1:i-2]`), the compiler doesn't type check on slices with operators. In that example, it would be unable to determine the size of the slice. (In fact, even if you wrote `x[3-1:0]`, it would be unable to determine the size of the slice.) So be particularly careful that you match your slice width to the assigned variable widths. If there is a size mismatch, the compiler will truncate the left-most bits, or pad on the left with 0's.
 
 ##### Concatenating Bits
 
-We can combine strings of bits into longer strings of bits. To concatenate two Bits, use curly braces `{ }`, as in the following notation:
+We can combine strings of bits into longer strings of bits. To concatenate two (or more) `Bit#`s, surround them with curly braces `{ }` and separate by commas, as in the following notation:
 
 ```bluespec
 Bit#(2) a = 2'b11;
@@ -417,6 +417,7 @@ Bit#(7) f = { '0, x, '1 }; // NOT ALLOWED, not clear how many 0's vs 1's to fill
 ```
 
 We can also accomplish the functionality through two built-in Bluespec functions, zeroExtend and signExtend.
+
 * `zeroExtend(x)`: equivalent to `{ '0, x }`
 * `signExtend(x)`:
     * equivalent to `{ '0, x }` if the MSB of x is 0
