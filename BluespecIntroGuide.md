@@ -333,7 +333,7 @@ Bit#(2) y = pack(yellow); // y = 2'b11, the binary representation of Yellow
 
 ##### Indexing Bits
 
-`Bit#`s are stored as a string of bits, indexed from the least significant bit (LSB) to the most significant bit (MSB). That is, more significant bits correspond to higher indices. Note that this is **backwards** from what you might expect based on how binary literals are normally written, since the literals go from most significant bits to least significant bits! (It's done this way so that `x[i]` in a binary number corresponds nicely to 2~~i~~.) For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB or rightmost bit), `x[1] = 1`, `x[2] = 0`, and `x[3] = 1` (the MSB or leftmost bit). In general, for a `Bit#(n)`, we can index it from `0` to `n-1`. When you index a `Bit#`, you get a `Bit#(1)`.
+`Bit#`s are stored as a string of bits, indexed from the least significant bit (LSB) to the most significant bit (MSB). That is, more significant bits correspond to higher indices. Note that this is **backwards** from what you might expect based on how binary literals are normally written, since the literals go from most significant bits to least significant bits! (It's done this way so that `x[i]` in a binary number corresponds nicely to 2<sup>i</sup>.) For example, if you have a `Bit#(4) x = 4'b1010`, then `x[0] = 0` (the LSB or rightmost bit), `x[1] = 1`, `x[2] = 0`, and `x[3] = 1` (the MSB or leftmost bit). In general, for a `Bit#(n)`, we can index it from `0` to `n-1`. When you index a `Bit#`, you get a `Bit#(1)`.
 
 To access a parameterized Bit, we can use the numeric type -> `Integer` conversion discussed above. For example:
 
