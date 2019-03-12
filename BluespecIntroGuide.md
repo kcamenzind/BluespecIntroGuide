@@ -276,10 +276,10 @@ match tagged NewType {m1: .myM1, m2: .myM2} = myNewVar;
 Enums are how we can define custom types that are defined by the compiler as bits, but we don't explicitly have to understand how they translate into bits. For example, if you want to define a type Color, which can take values Red, Green, Yellow and Blue, we can write
 
 ```bluespec
-typedef enum Color { Red, Green, Yellow, Blue } deriving (Bits, Eq); 
+typedef enum Color { Red, Green, Yellow, Blue } deriving (Bits, Eq);
 ```
 
-Deriving Bits means that the values Red, Green, Yellow and Blue will be automatically assigned an underlying representation in bits. Deriving Eq means that the equality operator is derived for the type as well, so if you have a Color variable, you can check if it's Red or Green or Yellow or Blue using the == comparator. You will generally want to include both of these in your enum declarations.
+Deriving `Bits` means that the values `Red`, `Green`, `Yellow` and `Blue` will be automatically assigned an underlying representation in bits. Deriving `Eq` means that the equality operator is derived for the type as well, so if you have a `Color` variable, you can check if it's `Red` or `Green` or `Yellow` or `Blue` using the `==` comparator. You will generally want to include both of these in your enum declarations.
 
 #### Type conversions
 
@@ -287,7 +287,7 @@ Deriving Bits means that the values Red, Green, Yellow and Blue will be automati
 
 To extract the Integer value of a numeric type, use `Integer i = valueOf(n)`, where `n` is the numeric type.
 
-To extract convert an Integer to a `Bit#(n)` value, use `Bit#(n) x = fromInteger(i)`, where `i` is an `Integer`.
+To convert an Integer to a `Bit#(n)` value, use `Bit#(n) x = fromInteger(i)`, where `i` is an `Integer`.
 
 You can chain these together to store the value of a numeric type into a `Bit#(n)` as follows:
 
@@ -297,7 +297,7 @@ Bit#(m) x = fromInteger(valueOf(n));
 
 (Note: `n` and `m` could be the same value, they're just different numeric type names to illustrate that they don't have to be the same value.)
 
-Lastly, you can extract the size of a Type (in bits) by using `SizeOf`. `SizeOf` returns a numeric type, which then you can then further convert into an Integer or `Bit#` depending on your use case. For example:
+Lastly, you can extract the size of a Type (in bits) by using `SizeOf`. `SizeOf` returns a numeric type, which then you can then further convert into an `Integer` or `Bit#` depending on your use case. For example:
 
 ```bluespec
 Bit#(3) x = 0; // Size of x is 3 bits
@@ -326,7 +326,6 @@ Color yellow = Yellow;
 
 Bit#(2) x = pack(red);    // x = 2'b00, the binary representation of Red
 Bit#(2) y = pack(yellow); // y = 2'b11, the binary representation of Yellow
-
 ```
 
 #### Working with Bits
@@ -478,7 +477,7 @@ There is no separate logical XOR operator, but the not-equals operator `!=` has 
 
 #### Ternary operator
 
-The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to val1 if `cond==True`, and val2 if `cond==False`. The cond must evaluate to the `Bool` (**not `Bit#(1)`**) type.
+The ternary statement mimics the behaviour of a multiplexer, and is shorthand for an if-else statement. The expression `(cond) ? val1 : val2` evaluates to `val1` if `cond==True`, and `val2` if `cond==False`. The cond must evaluate to the `Bool` (**not `Bit#(1)`**) type.
 
 Example:
 ```bluespec
@@ -878,12 +877,24 @@ Action methods alter the internal state of the circuit, which means that there i
 method Action actionMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
 ```
 
+You can call such methods as:
+
+```bluespec
+module.actionMethodName(arg1, arg2, ...);
+```
+
 ##### Value Methods
 
 Value methods do not alter the internal state of the circuit, so there's no enable signal because nothing in the circuit needs to change when the method is called. Instead, value methods just output some value generated in the circuit. Value methods are declared as follows:
 
 ```bluespec
 method ReturnType valueMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
+```
+
+You can call such methods and just use the return value in an expression or assign it to a variable:
+
+```bluespec
+ReturnType r = module.valueMethodName(arg1, arg2, ...);
 ```
 
 ##### ActionValue Methods
@@ -893,6 +904,14 @@ ActionValue methods both alter the internal state of the circuit and return a va
 ```bluespec
 method ActionValue#(ReturnType) avMethodName(ArgType1 arg1, ArgType2 arg2...); // Can have 0 or more args
 ```
+
+You can call such methods with the same syntax, but to use the return value, you must use the single arrow operator `<-`:
+
+```bluespec
+ReturnType r <- module.avMethodName(arg1, arg2, ...);
+```
+
+**If you write `=` instead of `<-`, `r` will still have the special type `ActionValue#(ReturnType)`,** which you can't perform computations on like `ReturnType`.
 
 #### Empty Interface
 
@@ -946,7 +965,7 @@ Any module instantiated within a module is considered internal state, since ever
 
 ##### Instantiating Internal State
 
-Internal state should be instantiated at the beginning of a module. We need to declare the internal state just like we would any variable in a function, but to initialize the value, we use a new operator, `<-`, to actually create an instantiation of the module.
+Internal state should be instantiated at the beginning of a module. We need to declare the internal state just like we would any variable in a function, but to initialize the value, we use a new operator, the left arrow `<-`, to actually create an instantiation of the module.
 
 ```bluespec
 Reg#(Bit#(1)) myReg <- mkRegU();            // Creates a register storing 1 bit, undefined initial value
@@ -965,7 +984,7 @@ The most basic module in Bluespec is the register: `Reg#(Type)`. A register can 
 A register has only two methods: `_read` and `_write`. Since it's such a commonly used module, however, there's a shorthand for these two methods. If we have a 2-bit register `x`:
 
 - `let y = x;` is equivalent to `let y = x._read();`
-- `x <= 2'b00;` is equivalent to `x._write(2'b00);`
+- `x <= 2'b00;` is equivalent to `x._write(2'b00);` Note that writing to a register uses the double arrow `<=`, which is distinct from the single arrow `<-` used for instantiating modules (above) or calling `ActionValue#` methods (below).
 
 When you read from a register, it returns the value of the data stored in the register. When you write data to a register, the new data value does not appear until the next cycle. So if a 1-bit register `x` is currently `0`, and in some rule/method (explained later) we have:
 
@@ -981,7 +1000,7 @@ x._write(1);
 y = x._read();
 ```
 
-and the end value of `y` will be 0, not 1, because writes to `x` don't happen until the end of the cycle, while reads happen at the beginning of the cycle. Note that `y` has to be an intermediate wire, not a register, because we're using `=` assignment, which isn't valid for registers. If `y` was a register and we wanted to read the value of `x` into `y`, we would need to do:
+and the end value of `y` will be 0, not 1, because writes to `x` don't happen until the end of the cycle, while reads happen at the beginning of the cycle. Note that `y` has to be a variable (corresponding to an intermediate wire), not a register, because we're using `=` assignment, which isn't valid for registers. If `y` was a register and we wanted to read the value of `x` into `y`, we would need to do:
 
 ```bluespec
 x <= 1; // write 1 to x
@@ -1053,14 +1072,14 @@ But you don't need to call both methods. You can choose to call just `fifo.first
 
 Methods and rules are how we define the combinatorial logic that decides when/how to change the internal state of the sequential circuit. Methods are how the outside world gives the circuit inputs and reads outputs. Rules, on the other hand, are invisible to the outside world and describe the rest of the combinational logic in the circuit.
 
-Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires). Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state. 
+Methods and rules consist of method calls to their internal modules, function calls, and assignments of temporary variables (wires). Both rules and methods are atomic, which means that either all or none of their actions are executed, where "actions" are calls to internal modules or writes to internal state.
 
 ##### Methods
 
-Methods are written as follows:
+Methods are defined as follows:
 
 ```bluespec
-method MethodType methodName(ArgType1 arg1, ... ) if (guard);
+method ReturnType methodName(ArgType1 arg1, ...) if (guard);
     statement1;
     statement2;
     ...
