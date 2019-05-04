@@ -1370,13 +1370,19 @@ Some example errors:
 
 #### Debugging with `$display`
 
-The `$display` statement (formally a "system task") is useful for debugging. It prints a string. (Of course this only happens during simulation of the circuit, not in a real circuit that would be synthesized.)
+The `$display` statement (formally a "system task") is useful for debugging. It prints any number of strings or other things. (Of course this only happens during simulation of the circuit, not in a real circuit that would be synthesized.)
 
 ```bluespec
-$display("Hello!");
+$display("Hello!", "Goodbye!");
 ```
 
-Actually, `$display` is like `printf` if you've ever encountered it in C. If you have a number `n`, you could print it using a `%` format specifier like this:
+You can also display numbers and other things:
+
+```bluespec
+$display("n is ", n);
+```
+
+`$display` can also be used like `printf` if you've ever encountered it in C. If you have a number `n`, you could print it using a `%` format specifier like this:
 
 ```bluespec
 $display("n is %d in decimal", n);
@@ -1389,12 +1395,6 @@ You can use multiple format specifiers for multiple numbers, like if you have an
 
 ```bluespec
 $display("n is %d and m is %d", n, m);
-```
-
-You could also just display the number directly:
-
-```bluespec
-$display(n);
 ```
 
 Note that `$display` prints a newline after the string you give it. If you don't want that, you can use `$write` instead, with the same syntax.
@@ -1410,12 +1410,12 @@ typedef struct {
 // later
 
 Foo foo = Foo { a: 1, b: 2 };
-$display(fshow(foo));
+$display("foo is ", fshow(foo));
 ```
 
 This will print something like `Foo { a: 'h00000001, b: 'h00000002 }` instead of just a garbage hex string.
 
-TODO: `fshow` returns a `Fmt` object. I'm not sure how this works with `$display` exactly, but if you want to display a message next to it you can write:
+`fshow` returns a `Fmt` object. You can also convert strings directly to `Fmt` objects by calling `$format`, and concatenate `Fmt` objects, like so:
 
 ```bluespec
 $display($format("foo is ") + fshow(foo));
