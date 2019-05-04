@@ -432,6 +432,19 @@ Bit#(4) y = truncate(x); // y = 4'b0011
 Bit#(2) z = truncate(x); // z = 2'b11
 ```
 
+##### Other Bit Functions
+
+Bluespec has several more functions for working with bits, but it's unlikely you will need them.
+
+```bluespec
+function Bit#(1) parity(Bit#(n) v); // even or odd number of 1's
+function Bit#(n) reverseBits(Bit#(n) v);
+function UInt#(lgn1) countOnes(Bit#(n) bin) provisos (...); // number of 1's
+function UInt#(lgn1) countZerosMSB(Bit#(n) bin) provisos (...); // number of 0's from MSB until first 1
+function UInt#(lgn1) countZerosLSB(Bit#(n) bin) provisos (...); // number of 0's from LSB until first 1
+function Bit#(n) truncateLSB(Bit#(m) x) provisos (...); // truncate from LSB
+```
+
 ### Operators
 
 There are several built-in operators for built-in Bluespec types.
@@ -1009,6 +1022,8 @@ y <= x; // read x into y
 
 Note: In this second example, **the old value of `x` will not appear in `y` until the end of the cycle**, since this operation is a write to the register `y`! So if we were to read from `y` on the next line, it would still return the old value of `y`.
 
+`ConfigReg`s are a small variant that behave just like normal registers, except that they don't enforce reads to be scheduled before writes. This does *not* mean that reads will see the value written by writes! All reads will still see old values. Import them with `import ConfigReg :: *;` and create them with `mkConfigReg` or `mkConfigRegU`.
+
 ##### Vectors
 
 Sometimes we want to declare an array of registers of the same size. For example, if we have a buffer of length n, we need an array of n registers to store our data. Bluespec has another built-in type, `Vector`, that we can use for this purpose, that has the following declaration:
@@ -1094,6 +1109,25 @@ A basic but less 6.004-relevant module are "wires", which are modules with a val
 - `mkWire` or `mkUnsafeWare` produces a `Wire` in which reads are implicitly guarded on whether a write occurred earlier. (`mkUnsafeWire` allows the write and read to be in the same rule, but `mkWire` does not.)
 - `mkBypassWire` produces a `Wire` with no implicit guard; the compiler warns if the wire is not written in every cycle.
 - `mkDWire(defaultValue)` produces a `Wire` with no implicit guard. Reading from this wire is always valid and will read the default value if no writes occurred.
+
+##### Ephemeral History Registers
+
+Ephemeral history registers, or EHRs, are basically registers that can be read/written several times in a cycle such that writes can be observed by later reads. In recent Bluespec versions, they can be found under the name `CReg`, for "concurrent register". The syntax to create one looks like:
+
+```bluespec
+Reg#(datatype) regs[3] <- mkCReg(3, defaultval);
+```
+
+You can now read and write to `regs[0]`, `regs[1]`, and `regs[2]`. Of course, the number 3 can be changed and the rules are similar to the above, but only small integers (up to 5?) are supported.
+
+The rules are:
+
+- Reads to `regs[i]` must happen before writes to the same `regs[i]`. The individual registers behave like normal registers in this regard.
+- All the writes must happen in order: if `i < j`, then writes to `regs[i]` must happen before writes to `regs[j]`. The last of these writes that occurs becomes the value of the `CReg` at the start of the next cycle.
+- Writes must come before, and are seen by, later reads: if `i < j`, then writes to `regs[i]` must happen before reads from `regs[j]`, and the last of all values written to `regs[i]` for `i < j` will be read by `regs[j]` (or, if no such write occurred, then the register's value at the start of the cycle will be read.)
+- Note, however, that if you don't write `reg[i]`, say, then there's no conflict between `reg[i]` and `reg[i+1]`.
+
+6.004 students may also be provided with an implementation called `Ehr`. Consult lecture slides/notes on usage.
 
 #### Methods and Rules
 
