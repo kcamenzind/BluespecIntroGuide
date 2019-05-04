@@ -1371,6 +1371,58 @@ Some example errors:
 -   **"`The following provisos are needed: Add#(a__, 1, w)`"**: If there's a variable that ends in two underscores, it's usually a made-up name internal to Bluespec. In this case this proviso just means that Bluespec thinks `w` has to be greater than or equal to 1. In this case you may actually want to add this proviso to your function; see the section below on provisos (TODO).
 
 #### Display statements and other system tasks/functions
+
+The `$display` statement (formally a "system task") is useful for debugging. It prints a string. (Of course this only happens during simulation of the circuit, not in a real circuit that would be synthesized.)
+
+```bluespec
+$display("Hello!");
+```
+
+Actually, `$display` is like `printf` if you've ever encountered it in C. If you have a number `n`, you could print it using a `%` format specifier like this:
+
+```bluespec
+$display("n is %d in decimal", n);
+$display("n is %b in binary", n);
+$display("n is %o in octal", n);
+$display("n is %x in hexadecimal", n);
+```
+
+You can use multiple format specifiers for multiple numbers, like if you have another number:
+
+```bluespec
+$display("n is %d and m is %d", n, m);
+```
+
+You could also just display the number directly:
+
+```bluespec
+$display(n);
+```
+
+Note that `$display` prints a newline after the string you give it. If you don't want that, you can use `$write` instead, with the same syntax.
+
+If you have a more complicated structure, though, you probably won't be happy with just displaying it directly. Instead, you should make the structure derive `FShow` and call `fshow` on it to get a nice format:
+
+```bluespec
+typedef struct {
+    Bit#(32) a;
+    Bit#(32) b;
+} Foo deriving (Bits, Eq, FShow);
+
+// later
+
+Foo foo = Foo { a: 1, b: 2 };
+$display(fshow(foo));
+```
+
+This will print something like `Foo { a: 'h00000001, b: 'h00000002 }` instead of just a garbage hex string.
+
+TODO: `fshow` returns a `Fmt` object. I'm not sure how this works with `$display` exactly, but if you want to display a message next to it you can write:
+
+```bluespec
+$display($format("foo is ") + fshow(foo));
+```
+
 #### Provisos
 #### Recursion
 #### Don't care values
