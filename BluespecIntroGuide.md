@@ -1034,7 +1034,7 @@ Note: To use Vectors, you have to import the Vector package by adding the follow
 import Vector :: * ;
 ```
 
-##### Other
+##### FIFO Queues
 
 There are other, more complex modules that can be used to store internal state. A FIFO (first-in-first-out) queue stores some amount of data. A producer can enqueue (`enq`) data, putting it into the queue, and a consumer can dequeue (`deq`) data, taking it out of the queue; this can happen in the same cycle or in different cycles. The consumer always dequeues data in the same order that the producer produces it, hence first-in-first-out. FIFOs are useful for flexibly storing data between pipeline stages.
 
@@ -1067,6 +1067,33 @@ fifo.deq;
 ```
 
 But you don't need to call both methods. You can choose to call just `fifo.first` to examine the data at the front of the queue, or just `fifo.deq;` to dequeue something and get rid of it.
+
+There are also "FIFOFs", which are just like FIFOs except that they also have methods to explicitly determine if they are (not) full or empty: `notFull` and `notEmpty` methods, which return `Bool`. You should `import FIFOF :: *;` to use them.
+
+```bluespec
+FIFOF#(datatype) fifof <- mkFIFOF;
+```
+
+If you want to specify exactly how large your FIFO or FIFOF should be, You can call `mkSizedFIFO` or `mkSizedFIFOF` with a positive integer argument.
+
+```bluespec
+FIFOF#(datatype) fifof <- mkSizedFIFOF(3);
+```
+
+Finally, there are a variety of more specialized FIFOs/FIFOFs if you `import SpecialFIFOs :: *;`. The most likely ones to be used:
+
+-   A *pipeline FIFO* (`mkPipelineFIFO` or `mkPipelineFIFOF`, which is size 1) is a FIFO where you can enqueue into a full FIFO if you also dequeue from it in the same cycle. It forces dequeueing to happen before enqueueing in each cycle.
+-   A *bypass FIFO* (`mkBypassFIFO` or `mkBypassFIFOF`, which is size 1) is a FIFO where you can dequeue from an empty FIFO if you also enqueue into it in the same cycle. It forces enqueueing to happen before dequeueing in each cycle.
+
+If you are curious about these FIFOs' implementation or need to customize them, you can look at the Bluespec source in `$BLUESPECDIR/BSVSource/Misc` directory. (Here `$BLUESPECDIR` is an environment variable. You can type `cd $BLUESPEDIR/BSVSource/Misc` in a terminal to go to that directory.)
+
+##### Wires
+
+A basic but less 6.004-relevant module are "wires", which are modules with a value that can be written in a cycle and then have the value read out later in that cycle (so reads are constrained to be scheduled later than writes). The most primitive is the `RWire` (created with `mkRWire`) module supports a `wset` action and a `wget` method, where `wget` returns a `Maybe#` value that is valid only if it was written earlier in the cycle. The `Wire` interface module supports `_read` and `_write`, so it can be operated on with the same syntax as a register, and has more variants:
+
+- `mkWire` or `mkUnsafeWare` produces a `Wire` in which reads are implicitly guarded on whether a write occurred earlier. (`mkUnsafeWire` allows the write and read to be in the same rule, but `mkWire` does not.)
+- `mkBypassWire` produces a `Wire` with no implicit guard; the compiler warns if the wire is not written in every cycle.
+- `mkDWire(defaultValue)` produces a `Wire` with no implicit guard. Reading from this wire is always valid and will read the default value if no writes occurred.
 
 #### Methods and Rules
 
@@ -1202,10 +1229,10 @@ endmodule
 
 **Scheduling** concerns how the Bluespec compiler determines which rules will fire in each cycle. Generally, in every cycle, Bluespec will try to fire every rule whose guard is True, in some order. If it can't do that, which could happen if two rules both interact with the same registers or conflicting methods of the same module, Bluespec will issue a warning. No matter what, each rule will execute at most once each cycle.
 
-Some constraints fom basic modules:
+Some constraints from basic modules:
 
 -   For a normal register, all reads (including e.g. in the guards of rules) must be scheduled before all writes in each cycle.
--   For a normal FIFO queue, only one rule can `enq` and only one rule can `deq` each cycle, but the two could happen in either order. `first` must happen before `deq`.
+-   For a normal FIFO queue, only one rule can `enq` and only one rule can `deq` each cycle, but the two could happen in either order. `first` must happen before `deq`. In a pipeline FIFO, `deq` must come before `enq`. In a bypass FIFO, `enq` must come before `deq`.
 
 If the `-show-schedule` flag is passed to Bluespec, which it should be in 6.004 makefiles, you can see the generated schedule of rules in the `.sched` file. There are also some *scheduling attributes* that you can write before rules to affect their scheduling. They are rather advanced but can be useful to make sure that methods are fired under the conditions you expect them to, and scheduled in the order you expect them to. Consult the Bluespec reference guide for more information.
 
