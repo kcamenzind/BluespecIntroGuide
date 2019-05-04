@@ -41,6 +41,9 @@
 - [Additional Topics](#additional-topics)
   * [Maybe values](#maybe-values)
   * [Case matches](#case-matches)
+  * [Common errors](#common-errors)
+  * [Debugging with `$display`](#debugging-with-display)
+  * ["Don't care" values](#dont-care-values)
 
 
 ## Overview
@@ -1314,13 +1317,7 @@ case (foo) matches
 endcase
 ```
 
-## TODO
-
-#### Program Structure (scoping, visibility, file structure, etc.)
-#### Rule conflicts and scheduling
-#### Testbenches
-#### Synthesis / synthesize keyword
-#### Debugging / Common Error Messages
+#### Common Errors
 
 Most of Bluespec's error messages have line and column numbers, so it can often help you track down the error sooner if you enable line numbers on your text editor.
 
@@ -1370,7 +1367,8 @@ Some example errors:
 
 -   **"`The following provisos are needed: Add#(a__, 1, w)`"**: If there's a variable that ends in two underscores, it's usually a made-up name internal to Bluespec. In this case this proviso just means that Bluespec thinks `w` has to be greater than or equal to 1. In this case you may actually want to add this proviso to your function; see the section below on provisos (TODO).
 
-#### Display statements and other system tasks/functions
+
+#### Debugging with `$display`
 
 The `$display` statement (formally a "system task") is useful for debugging. It prints a string. (Of course this only happens during simulation of the circuit, not in a real circuit that would be synthesized.)
 
@@ -1423,7 +1421,18 @@ TODO: `fshow` returns a `Fmt` object. I'm not sure how this works with `$display
 $display($format("foo is ") + fshow(foo));
 ```
 
+#### Don't care values
+
+The question mark `?` can be used as an expression. It means that you don't care about what the value is, and allows Bluespec to synthesize a more optimized circuit. For example, if you have a struct where sometimes one of the values doesn't matter, you can set it to `?` when it doesn't and a concrete value when it does.
+
+Note that the `?` value doesn't necessarily obey common-sense invariants, so you should really only use it when you're sure it won't affect anything you care about. For example, if you write `if (?)` then either of the two branches of the `if`/`else` statement could occur, or both or neither.
+
+## TODO
+
+#### Program Structure (scoping, visibility, file structure, etc.)
+#### Rule conflicts and scheduling
+#### Testbenches
+#### Synthesis / synthesize keyword
 #### Provisos
 #### Recursion
-#### Don't care values
 #### Tagged Unions
